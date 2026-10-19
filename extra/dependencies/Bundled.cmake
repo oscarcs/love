@@ -95,6 +95,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
   target_link_libraries(lovedep::OpenAL INTERFACE "${LOVE_IOS_OPENAL}")
   target_compile_definitions(lovedep::OpenAL INTERFACE LOVE_APPLE_USE_FRAMEWORKS)
 else()
+  # Keep the same header-based build across generators and SDK toolchains.
+  set(ALSOFT_ENABLE_MODULES OFF CACHE BOOL "" FORCE)
   set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
   set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(ALSOFT_INSTALL OFF CACHE BOOL "" FORCE)
