@@ -25,7 +25,7 @@ def main():
     app = stage / 'love.app'
     symbols = stage / 'dSYMs'
     symbols.mkdir()
-    for binary in [app / 'Contents/MacOS/love'] + list((app / 'Contents/Frameworks').glob('*.dylib')):
+    for binary in [app / 'Contents/MacOS/love'] + [p for p in (app / 'Contents/Frameworks').glob('*.dylib') if not p.is_symlink()]:
         run('xcrun', 'dsymutil', binary, '-o', symbols / (binary.name + '.dSYM'))
         run('xcrun', 'strip', '-S', binary)
         run('codesign', '--force', '--sign', '-', binary)
