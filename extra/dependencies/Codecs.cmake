@@ -29,6 +29,15 @@ foreach(file ${theora_files})
   list(APPEND theora_sources "${dep}/theora/lib/${file}.c")
 endforeach()
 add_library(love_dep_theora STATIC ${theora_sources})
+# Keep the AppImage recipe's x86-64 SIMD decoder acceleration.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ANDROID
+   AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$"
+   AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  foreach(file x86cpu mmxidct mmxfrag mmxstate sse2idct x86state)
+    target_sources(love_dep_theora PRIVATE "${dep}/theora/lib/x86/${file}.c")
+  endforeach()
+  target_compile_definitions(love_dep_theora PRIVATE OC_X86_ASM OC_X86_64_ASM)
+endif()
 target_include_directories(love_dep_theora PUBLIC "${dep}/theora/include" PRIVATE "${dep}/theora/lib")
 target_link_libraries(love_dep_theora PUBLIC love_dep_ogg)
 target_link_libraries(lovedep::Theora INTERFACE love_dep_theora)

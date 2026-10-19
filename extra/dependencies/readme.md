@@ -29,7 +29,7 @@ that the old binary inputs can be reproduced exactly.
 
 Small Ogg, Vorbis, Theora decoder, and ModPlug source recipes in `Codecs.cmake`
 derive from the libraries' source lists and Megasource at
-`5118c13ca1dea1890e298c0ce5e410846913a5a8`. They build portable C/C++ code;
+`5118c13ca1dea1890e298c0ce5e410846913a5a8`. They build portable C/C++ code, retaining Theora's x86-64 SIMD decoder on Linux.
 Theora encoding is not used by the engine. LuaJIT uses its native build system
 through `build-luajit.py`, including Android cross compilation. Native Android
 LuaJIT binaries are built from source, not copied from Megasource.
