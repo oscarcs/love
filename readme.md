@@ -13,7 +13,19 @@ The suite exits with status `0` when no tests fail, or `1` if any test fails. Sk
 See the [test suite README](testing/readme.md) for more info.
 
 [CI](.github/workflows/ci.yml) builds and tests Linux x64 on pull requests and pushes to `main`.
-The [full platform builds and packages](.github/workflows/main.yml) run manually through GitHub Actions.
+[Desktop packages](.github/workflows/main.yml) run manually through GitHub Actions, with independent selections for:
+
+- Linux x64 and ARM64 AppImages
+- Windows x64 ZIP (executables, DLLs, and LuaJIT tooling)
+- macOS ARM64 app ZIP
+
+Packages include debug symbols and a manifest with source/dependency revisions and SHA-256 hashes.
+The packaged executables are tested before upload; artifacts are retained for 14 days and are not published as releases.
+Linux x64 packages build on Ubuntu 22.04; ARM64 packages build on Ubuntu 24.04.
+Debian packages and Windows installers are not built.
+
+[Mobile builds](.github/workflows/mobile.yml) run separately on demand: Android Debug/Release APKs and release bundles, or an iOS simulator build check.
+See [packaging maintenance](extra/packaging/readme.md) for dependency pins and validation details.
 
 Compilation
 -----------

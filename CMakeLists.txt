@@ -2013,12 +2013,15 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 	install(TARGETS love lovec liblove RUNTIME DESTINATION .)
 	install(PROGRAMS $<TARGET_FILE:${MEGA_SDL3}> DESTINATION .)
 
-	# Our install script (and NSIS) doesn't fully support Windows ARM64 yet.
+	# Include LuaJIT tooling in the portable Windows package.
+	if(LOVE_JIT AND MEGA)
+		install(DIRECTORY "${CMAKE_BINARY_DIR}/libs/LuaJIT/src/jit"
+			DESTINATION . FILES_MATCHING PATTERN "*.lua")
+	endif()
+
+	set(CPACK_GENERATOR ZIP)
 	if(MEGA_ARM64)
-		set(CPACK_GENERATOR ZIP)
 		set(CPACK_SYSTEM_NAME woa64)
-	else()
-		set(CPACK_GENERATOR ZIP NSIS)
 	endif()
 
 	# Extra DLLs.
@@ -2059,15 +2062,9 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 			${CMAKE_CURRENT_BINARY_DIR}/readme.txt
 			DESTINATION .)
 
-	# Icons
-	install(FILES
-			${CMAKE_CURRENT_SOURCE_DIR}/extra/nsis/love.ico
-			${CMAKE_CURRENT_SOURCE_DIR}/extra/nsis/game.ico
-			DESTINATION .)
-
 	set(CPACK_PACKAGE_NAME "love")
-	set(CPACK_PACKAGE_VENDOR "love2d.org")
-	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "LOVE -- It's awesome")
+	set(CPACK_PACKAGE_VENDOR "LÖVE fork")
+	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "LÖVE game framework fork")
 	set(CPACK_PACKAGE_VERSION "${LOVE_VERSION_STR}")
 	set(CPACK_PACKAGE_VERSION_MAJOR "${LOVE_VERSION_MAJOR}")
 	set(CPACK_PACKAGE_VERSION_MINOR "${LOVE_VERSION_MINOR}")
@@ -2077,61 +2074,9 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 	set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/readme.md")
 	set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
 
-	set(CPACK_NSIS_EXECUTABLES_DIRECTORY .)
-	set(CPACK_NSIS_PACKAGE_NAME "LOVE")
-	set(CPACK_NSIS_DISPLAY_NAME "LOVE ${LOVE_VERSION_STR}")
-	set(CPACK_NSIS_MODIFY_PATH ON)
-
-	if(LOVE_X64)
-		set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
-	else()
-		set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES")
-	endif()
-
-	set(CPACK_NSIS_MENU_LINKS "http://love2d.org/wiki" "Documentation")
-
-	# Some bug somewhere in NSIS requires "\\\\" somewhere in the path,
-	# according to The Internet. (And sure enough, it does not work
-	# without it).
-	set(NSIS_LEFT_BMP "${CMAKE_CURRENT_SOURCE_DIR}/extra/nsis\\\\left.bmp")
-	set(NSIS_TOP_BMP "${CMAKE_CURRENT_SOURCE_DIR}/extra/nsis\\\\top.bmp")
-	set(NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/extra/nsis\\\\love.ico")
-	set(NSIS_MUI_UNICON "${CMAKE_CURRENT_SOURCE_DIR}/extra/nsis\\\\love.ico")
-
-	set(CPACK_NSIS_INSTALLER_MUI_ICON_CODE "
-		!define MUI_WELCOMEPAGE_TITLE \\\"LOVE ${LOVE_VERSION_STR} Setup\\\"
-		!define MUI_WELCOMEFINISHPAGE_BITMAP \\\"${NSIS_LEFT_BMP}\\\"
-		!define MUI_HEADERIMAGE_BITMAP \\\"${NSIS_TOP_BMP}\\\"
-		!define MUI_ICON \\\"${NSIS_MUI_ICON}\\\"
-		!define MUI_UNICON \\\"${NSIS_MUI_UNICON}\\\"
-	")
-
-	set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-		WriteRegStr HKCR \\\".love\\\" \\\"\\\" \\\"LOVE\\\"
-		WriteRegStr HKCR \\\"LOVE\\\" \\\"\\\" \\\"LOVE Game File\\\"
-		WriteRegStr HKCR \\\"LOVE\\\\DefaultIcon\\\" \\\"\\\" \\\"$INSTDIR\\\\game.ico\\\"
-		WriteRegStr HKCR \\\"LOVE\\\\shell\\\" \\\"\\\" \\\"open\\\"
-		WriteRegStr HKCR \\\"LOVE\\\\shell\\\\open\\\" \\\"\\\" \\\"Open in LOVE\\\"
-		WriteRegStr HKCR \\\"LOVE\\\\shell\\\\open\\\\command\\\" \\\"\\\" \\\"$INSTDIR\\\\love.exe $\\\\\\\"%1$\\\\\\\"\\\"
-		System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v  (0x08000000, 0, 0, 0)'
-	")
-
-	set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
-		DeleteRegKey HKCR \\\"LOVE\\\"
-		DeleteRegKey HKCR \\\".love\\\"
-		System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v  (0x08000000, 0, 0, 0)'
-	")
-
 	include(CPack)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 	include(GNUInstallDirs)
-
-	string(TIMESTAMP LOVE_CONFIGURE_TIMESTAMP "%a, %d %b %Y %H:%M:%S +0000" UTC)
-
-	file(COPY platform/unix/debian/ DESTINATION debian PATTERN "*.in" EXCLUDE)
-	configure_file(platform/unix/debian/control.in debian/control @ONLY)
-	configure_file(platform/unix/debian/changelog.in debian/changelog @ONLY)
-	configure_file(platform/unix/debian/rules.in debian/rules @ONLY)
 
 	configure_file(platform/unix/love.desktop.in love.desktop @ONLY)
 

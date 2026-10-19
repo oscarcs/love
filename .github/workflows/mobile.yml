@@ -1,0 +1,137 @@
+name: Mobile builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Mobile target
+        type: choice
+        options: [android, ios-simulator]
+        default: android
+      configuration:
+        description: Android build configuration
+        type: choice
+        options: [Release, Debug]
+        default: Release
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    if: inputs.platform == 'ios-simulator'
+    name: iOS simulator build
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: source
+      - name: Checkout dependencies
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: love2d/love-apple-dependencies
+          ref: a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e
+          path: apple-dependencies
+      - name: Build for simulator
+        run: |
+          mv apple-dependencies/iOS/libraries source/platform/xcode/ios/
+          mv apple-dependencies/shared source/platform/xcode/
+          xcodebuild -project source/platform/xcode/love.xcodeproj -scheme love-ios \
+            -configuration Release -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$PWD/build" CODE_SIGNING_ALLOWED=NO | tee "$RUNNER_TEMP/build.log"
+          mkdir dist
+          python3 source/extra/packaging/manifest.py dist/manifest.json --source source --target ios-simulator --dependency apple-dependencies
+      - name: Upload build metadata
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ios-simulator-build
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ios-simulator-failure
+          path: ${{ runner.temp }}/build.log
+          retention-days: 7
+
+  android:
+    if: inputs.platform == 'android'
+    name: Android ${{ inputs.configuration }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4G
+      BUILD_CONFIGURATION: ${{ inputs.configuration }}
+    steps:
+      - name: Checkout Android build
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: love2d/love-android
+          ref: 4c65fff4f8b38693aca5d91bc06f254f86a97adf
+          path: android
+          submodules: false
+      - name: Checkout dependencies
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: love2d/megasource
+          ref: 5118c13ca1dea1890e298c0ce5e410846913a5a8
+          path: android/app/src/main/cpp/megasource
+      - name: Checkout source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: android/app/src/main/cpp/love
+      - name: Set up Java
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes ninja-build cmake
+      - name: Build APK and release bundles
+        working-directory: android
+        run: |
+          bash ./gradlew "assembleNormalRecord$BUILD_CONFIGURATION" 2>&1 | tee "$RUNNER_TEMP/build.log"
+          if [ "$BUILD_CONFIGURATION" = Release ]; then
+            bash ./gradlew bundleNormalNoRecordRelease bundleEmbedRecordRelease bundleEmbedNoRecordRelease 2>&1 | tee -a "$RUNNER_TEMP/build.log"
+          fi
+      - name: Stage artifacts and metadata
+        run: |
+          mkdir dist
+          find android/app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' -o -name '*native-debug-symbols.zip' \) -exec cp {} dist/ \;
+          test -n "$(find dist -name '*.apk' -print -quit)"
+          python3 android/app/src/main/cpp/love/extra/packaging/manifest.py dist/manifest.json \
+            --source android/app/src/main/cpp/love --target "android-$BUILD_CONFIGURATION" \
+            --dependency android --dependency android/app/src/main/cpp/megasource
+      - name: Upload artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-android-${{ inputs.configuration }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload native debug symbols
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-android-${{ inputs.configuration }}-debug
+          path: android/app/build/intermediates/cxx/**/obj/**/*.so
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-${{ inputs.configuration }}-failure
+          path: ${{ runner.temp }}/build.log
+          retention-days: 7

@@ -49,9 +49,6 @@ libtool
 /platform/unix/compile
 /platform/unix/config.guess
 /platform/unix/config.sub
-/platform/unix/debian/changelog
-/platform/unix/debian/control
-/platform/unix/debian/rules
 /platform/unix/depcomp
 /platform/unix/install-sh
 /platform/unix/love.desktop

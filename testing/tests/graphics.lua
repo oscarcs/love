@@ -2388,8 +2388,11 @@ love.test.graphics.setLineStyle = function(test)
     love.graphics.origin()
   love.graphics.setCanvas()
   local imgdata = love.graphics.readbackTexture(canvas)
-  -- linux runner needs a 1/255 tolerance for the blend between a rough line + bg 
-  if GITHUB_RUNNER and test:isOS('Linux') then
+  -- Smooth-line edge blending can differ by one 8-bit level on software-rendered CI.
+  local renderer, _, _, device = love.graphics.getRendererInfo()
+  local windowsSoftwareGLES = test:isOS('Windows') and renderer == 'OpenGL ES'
+    and device:find('llvmpipe', 1, true) ~= nil
+  if GITHUB_RUNNER and (test:isOS('Linux') or windowsSoftwareGLES) then
     test.rgba_tolerance = 1
   end
   test:compareImg(imgdata)

@@ -137,5 +137,5 @@ You can specify the test suite is being run on a runner by adding the `--isRunne
 | -------------------------- | --------- | ------------------- | ------ |
 | love.graphics.setWireframe |   MacOS   |    1px tolerance    | Wireframes are offset by 1,1 when drawn |
 | love.graphica.arc          |   MacOS   |       Skipped       | Arc curves are drawn slightly off at really low scale  |
-| love.graphics.setLineStyle |   Linux   |   1rgba tolerance   | 'Rough' lines blend differently with the background rgba |
+| love.graphics.setLineStyle | Linux / Windows GLES llvmpipe | 1rgba tolerance | Smooth-line edge blending can differ by one 8-bit color level on software-rendered CI |
 | love.audio.RecordingDevice |    All    |       Skipped       | Recording devices can't be emulated on runners |

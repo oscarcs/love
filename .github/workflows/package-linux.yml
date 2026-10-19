@@ -1,0 +1,108 @@
+name: Linux AppImage package
+
+on:
+  workflow_call:
+    inputs:
+      architecture:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Linux ${{ inputs.architecture }} AppImage
+    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: source
+      - name: Checkout AppImage recipe
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: love2d/love-appimage-source
+          ref: 0591237f5de186ab01e2d3ca047d94ec95986b5d
+          path: builder
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            build-essential cmake autoconf automake libtool pkg-config patchelf \
+            libasound2-dev libpulse-dev libaudio-dev libjack-dev libx11-dev libxext-dev \
+            libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxinerama-dev \
+            libxxf86vm-dev libxss-dev libxtst-dev libgl1-mesa-dev libdbus-1-dev \
+            libudev-dev libgles2-mesa-dev libegl1-mesa-dev libibus-1.0-dev \
+            fcitx-libs-dev libsamplerate0-dev libsndio-dev libwayland-dev \
+            libxkbcommon-dev libdrm-dev libgbm-dev libcurl4-openssl-dev libfuse2 \
+            libpipewire-0.3-dev libdecor-0-dev liburing-dev xvfb xauth wmctrl openbox
+      - name: Prepare pinned inputs
+        working-directory: builder
+        run: |
+          ln -s ../source "love2d-$GITHUB_SHA"
+          python3 ../source/extra/packaging/prepare-appimage.py
+          for attempt in 1 2 3; do
+            if make getdeps SYSTEM_CMAKE=1 LOVE_BRANCH="$GITHUB_SHA"; then break; fi
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            sleep "$((attempt * 5))"
+          done
+      - name: Build AppImage
+        working-directory: builder
+        run: make AppImage SYSTEM_CMAKE=1 LOVE_BRANCH="$GITHUB_SHA" NUMBER_OF_PROCESSORS=2 2>&1 | tee "$RUNNER_TEMP/build.log"
+      - name: Stage packages and metadata
+        run: |
+          mkdir dist
+          cp "builder/love-$GITHUB_SHA.AppImage" "dist/love-linux-${{ inputs.architecture }}.AppImage"
+          cp "builder/love-$GITHUB_SHA.AppImage-debug.tar.gz" "dist/love-linux-${{ inputs.architecture }}-debug.tar.gz"
+          python3 source/extra/packaging/manifest.py dist/manifest.json --source source \
+            --target "linux-${{ inputs.architecture }}" --dependency builder \
+            --dependency builder/SDL3-release-3.4.10 --dependency builder/LuaJIT-v2.1 \
+            --dependency builder/openal-soft-1.24.3 --dependency builder/zlib-v1.3 \
+            --dependency builder/harfbuzz-10.1.0 --downloads builder
+      - name: Test packaged AppImage (OpenGL)
+        timeout-minutes: 5
+        env:
+          ALSOFT_CONF: ${{ github.workspace }}/source/testing/resources/alsoft.conf
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          # Test-driver workaround; not embedded in the AppImage.
+          LP_PERF: no_rast_linear
+          LOVE_GRAPHICS_DEBUG: '1'
+          SDL_VIDEODRIVER: x11
+          LOVE_APPIMAGE: ${{ github.workspace }}/dist/love-linux-${{ inputs.architecture }}.AppImage
+        run: |
+          chmod +x "$LOVE_APPIMAGE"
+          xvfb-run -a -s '-screen 0 1280x1024x24' bash <<'TESTS' 2>&1 | tee "$RUNNER_TEMP/opengl.log"
+          set -euo pipefail
+          openbox > "$RUNNER_TEMP/openbox.log" 2>&1 &
+          window_manager_pid=$!
+          trap 'kill "$window_manager_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..50}; do
+            if wmctrl -m >/dev/null 2>&1; then break; fi
+            sleep 0.1
+          done
+          wmctrl -m
+          "$LOVE_APPIMAGE" source/testing --all --isRunner --renderers opengl
+          TESTS
+      - name: Upload packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-linux-${{ inputs.architecture }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-${{ inputs.architecture }}-failure
+          path: |
+            source/testing/output/
+            ${{ runner.temp }}/build.log
+            ${{ runner.temp }}/opengl.log
+            ${{ runner.temp }}/openbox.log
+          retention-days: 7
