@@ -29,9 +29,11 @@ cmake --build build/windows --config Release --parallel 2
 ### Linux
 
 Install a C/C++ toolchain, CMake, Python, make, pkg-config, and the development
-packages for your system's windowing, audio, and graphics APIs. The complete
+packages for your system's windowing, audio, and graphics APIs. Bundled builds
+require a C++20 compiler with ranges support, such as GCC 12+. The complete
 Ubuntu package list is in the [Linux packaging workflow](.github/workflows/package-linux.yml).
-Then build the engine and its pinned libraries:
+On Ubuntu 22.04, install `g++-12` and prefix the configure command with
+`CC=gcc-12 CXX=g++-12`. Build the engine and its pinned libraries:
 
 ```sh
 cmake --preset bundled

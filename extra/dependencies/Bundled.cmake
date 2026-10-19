@@ -1,5 +1,8 @@
 # Dependency sources are downloaded from their original projects, verified by
 # sources.json, and built with recipes owned by this fork.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
+  message(FATAL_ERROR "Bundled OpenAL Soft requires GCC 12 or newer. Set CC and CXX before configuring.")
+endif()
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_LIST_DIR}/sources.json" "${CMAKE_CURRENT_LIST_DIR}/fetch.py")

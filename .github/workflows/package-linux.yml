@@ -15,6 +15,9 @@ jobs:
     name: Linux ${{ inputs.architecture }} AppImage
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-22.04' }}
     timeout-minutes: 45
+    env:
+      CC: ${{ inputs.architecture == 'x64' && 'gcc-12' || 'gcc' }}
+      CXX: ${{ inputs.architecture == 'x64' && 'g++-12' || 'g++' }}
     defaults:
       run:
         shell: bash
@@ -35,6 +38,9 @@ jobs:
             fcitx-libs-dev libsamplerate0-dev libsndio-dev libwayland-dev \
             libxkbcommon-dev libdrm-dev libgbm-dev libcurl4-openssl-dev libfuse2 \
             libpipewire-0.3-dev libdecor-0-dev liburing-dev xvfb xauth wmctrl openbox
+          if [ "${{ inputs.architecture }}" = x64 ]; then
+            sudo apt-get install --no-install-recommends --yes g++-12
+          fi
       - name: Build from pinned dependency sources
         run: |
           cmake -S source -B build -G Ninja -DLOVE_DEPENDENCIES=BUNDLED \
