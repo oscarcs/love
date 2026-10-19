@@ -906,6 +906,7 @@ int loader(lua_State *L)
 	}
 
 	auto *inst = instance();
+	std::string errstr = "\n\tno Lua code '" + modulename + "' in LOVE filesystem paths:";
 	for (std::string element : inst->getRequirePath())
 	{
 		replaceAll(element, "?", modulename);
@@ -920,11 +921,11 @@ int loader(lua_State *L)
 			lua_pushstring(L, element.c_str());
 			return w_load(L);
 		}
+
+		errstr += "\n\t  tried '" + element + "'";
 	}
 
-	std::string errstr = "\n\tno '%s' in LOVE game directories.";
-
-	lua_pushfstring(L, errstr.c_str(), modulename.c_str());
+	luax_pushstring(L, errstr);
 	return 1;
 }
 
@@ -968,7 +969,7 @@ int extloader(lua_State *L)
 	SDL_SharedObject *handle = nullptr;
 	auto *inst = instance();
 
-	std::string loaderror = "";
+	std::string errstr = "\n\tno C library '" + tokenized_name + "' in LOVE filesystem paths:";
 
 #ifdef LOVE_ANDROID
 	// Specifically Android, look the library path based on getCRequirePath first
@@ -978,14 +979,16 @@ int extloader(lua_State *L)
 	{
 		// Replace ? with just the dotted filename (not tokenized_name)
 		replaceAll(filepath, "?", filename);
+		errstr += "\n\t  tried '" + filepath + "'";
 
 		// Load directly, don't check for existence.
 		handle = SDL_LoadObject(filepath.c_str());
+		if (!handle)
+			errstr += ": could not load: " + std::string(SDL_GetError());
 	}
 
 	if (!handle)
 	{
-		loaderror += std::string(" ") + std::string(SDL_GetError());
 #endif // LOVE_ANDROID
 
 	for (const std::string &el : inst->getCRequirePath())
@@ -999,6 +1002,7 @@ int extloader(lua_State *L)
 
 			// And ? with just the filename
 			replaceAll(element, "?", tokenized_name);
+			errstr += "\n\t  tried '" + element + "'";
 
 			Filesystem::Info info = {};
 			if (!inst->getInfo(element.c_str(), info) || info.type == Filesystem::FILETYPE_DIRECTORY)
@@ -1012,7 +1016,7 @@ int extloader(lua_State *L)
 			if (handle)
 				break;
 			else
-				loaderror += std::string(" ") + std::string(SDL_GetError());
+				errstr += ": could not load '" + filepath + "': " + std::string(SDL_GetError());
 		}
 
 		if (handle)
@@ -1025,7 +1029,7 @@ int extloader(lua_State *L)
 
 	if (!handle)
 	{
-		lua_pushfstring(L, "\n\tno valid C library '%s' in LOVE paths.%s", tokenized_name.c_str(), loaderror.c_str());
+		luax_pushstring(L, errstr);
 		return 1;
 	}
 

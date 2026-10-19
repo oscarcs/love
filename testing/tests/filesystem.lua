@@ -531,6 +531,57 @@ love.test.filesystem.setRequirePath = function(test)
 end
 
 
+-- require diagnostics should describe virtual paths and preserve native load errors.
+love.test.filesystem.requireDiagnostics = function(test)
+  local luaPath = love.filesystem.getRequirePath()
+  local cPath = love.filesystem.getCRequirePath()
+  local dir = '__love_require_diagnostics'
+  local missing = '__love_require_missing.module'
+  local found = '__love_require_found'
+  local invalid = '__love_require_invalid'
+  local ext = love.system.getOS() == 'Windows' and '.dll' or
+    ((love.system.getOS() == 'OS X' or love.system.getOS() == 'iOS') and '.dylib' or '.so')
+  local nativePath = dir .. '/' .. invalid .. ext
+
+  love.filesystem.createDirectory(dir)
+  love.filesystem.setRequirePath(dir .. '/?.lua;' .. dir .. '/?/init.lua')
+  love.filesystem.setCRequirePath(dir .. '/??')
+
+  local ok, err = pcall(require, missing)
+  test:assertFalse(ok, 'missing module fails')
+  err = tostring(err)
+  for _, path in ipairs({
+    dir .. '/__love_require_missing/module.lua',
+    dir .. '/__love_require_missing/module/init.lua',
+    dir .. '/__love_require_missing/module' .. ext,
+  }) do
+    test:assertTrue(err:find("tried '" .. path .. "'", 1, true) ~= nil, 'reports attempted path ' .. path)
+  end
+  test:assertTrue(err:find('LOVE filesystem paths', 1, true) ~= nil, 'uses virtual filesystem terminology')
+
+  love.filesystem.write(dir .. '/' .. found .. '.lua', 'return { answer = 42 }')
+  local loaded, value = pcall(require, found)
+  test:assertTrue(loaded, 'custom Lua search path still loads modules')
+  if loaded then test:assertEquals(42, value.answer, 'loaded module result') end
+
+  love.filesystem.write(nativePath, 'not a shared library')
+  local nativeOK, nativeError = pcall(require, invalid)
+  test:assertFalse(nativeOK, 'invalid native library fails')
+  nativeError = tostring(nativeError)
+  test:assertTrue(nativeError:find("tried '" .. nativePath .. "'", 1, true) ~= nil, 'reports native virtual path')
+  test:assertTrue(nativeError:find('could not load', 1, true) ~= nil, 'preserves native loader failure')
+  local realPath = love.filesystem.getRealDirectory(nativePath)
+  test:assertTrue(nativeError:find(realPath, 1, true) ~= nil, 'reports resolved native directory')
+
+  love.filesystem.setRequirePath(luaPath)
+  love.filesystem.setCRequirePath(cPath)
+  package.loaded[found], package.loaded[invalid] = nil, nil
+  love.filesystem.remove(nativePath)
+  love.filesystem.remove(dir .. '/' .. found .. '.lua')
+  love.filesystem.remove(dir)
+end
+
+
 -- love.filesystem.setSource
 love.test.filesystem.setSource = function(test)
   test:skipTest('used internally')
