@@ -76,6 +76,37 @@ love.test.math.BezierCurve = function(test)
 end
 
 
+-- BezierCurve:renderSegment
+love.test.math.BezierCurve_renderSegment = function(test)
+  local curve = love.math.newBezierCurve(0, 0, 50, 100, 100, 0)
+  for _, accuracy in ipairs({1, 3, 5}) do
+    local full = curve:render(accuracy)
+    for _, range in ipairs({{0.2, 0.6}, {0.125, 0.875}, {0, 0.4}, {0.6, 1}, {0, 1}}) do
+      local forward = curve:renderSegment(range[1], range[2], accuracy)
+      local reverse = curve:renderSegment(range[2], range[1], accuracy)
+      test:assertTrue(#forward > 0, 'nonempty segment')
+      test:assertEquals(#forward, #reverse, 'reversed range has the same size')
+      for i, value in ipairs(forward) do
+        test:assertEquals(value, reverse[i], 'reversed range selects the same coordinates')
+      end
+    end
+
+    local whole = curve:renderSegment(1, 0, accuracy)
+    test:assertEquals(#full, #whole, 'full reversed range includes both endpoints')
+    for i, value in ipairs(full) do
+      test:assertEquals(value, whole[i], 'full range matches render')
+    end
+    for _, endpoint in ipairs({0, 0.5, 1}) do
+      test:assertEquals(0, #curve:renderSegment(endpoint, endpoint, accuracy), 'equal endpoints give an empty segment')
+    end
+  end
+
+  local segment = curve:renderSegment(0.6, 0.2, 5)
+  test:assertEquals(28, #segment, 'reversed partial range excludes the rest of the curve')
+  test:assertTrue(segment[1] > 0 and segment[#segment - 1] < 100, 'partial range excludes curve endpoints')
+end
+
+
 -- RandomGenerator (love.math.RandomGenerator)
 -- @NOTE as this checks random numbers the chances this fails is very unlikely, but not 0...
 -- if you've managed to proc it congrats! your prize is to rerun the testsuite again
