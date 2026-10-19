@@ -97,6 +97,8 @@ jobs:
           python3 source/extra/packaging/manifest.py dist/manifest.json \
             --source source --target "android-$BUILD_CONFIGURATION" \
             --sources source/.deps/android/sources.json
+      - name: Verify packaged native libraries
+        run: python3 source/extra/packaging/check-android.py dist
       - name: Upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

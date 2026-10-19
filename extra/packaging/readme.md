@@ -33,3 +33,8 @@ All desktop jobs run the existing API test suite from the packaged artifact: Lin
 Linux currently tests OpenGL; Windows tests OpenGL and OpenGL ES; macOS tests OpenGL and Metal. Other graphics paths are not validated by these packaging jobs. Failures upload test output and logs for seven days. The smooth-line image test uses its existing Linux 1/255 color tolerance on Windows GLES llvmpipe in CI as well; see `testing/readme.md` for the scoped runner exceptions.
 
 The package workflows retain Linux debug archives, Windows PDBs, and macOS dSYMs. Android retains unstripped native shared libraries rather than the entire native build directory. Windows source indexing, NSIS installers, and Debian packaging have been removed. Ordinary CMake installation rules remain available.
+
+Android APKs and AABs are inspected for the expected ABI set, ELF architectures,
+required native libraries, unresolved shared-library dependencies, and the audio
+stream initialization JNI export. These are package integrity checks; the mobile
+jobs do not run the API suite on an emulator or device.
