@@ -8,10 +8,6 @@
 /configure-modules-pre.ac
 /configure.ac
 
-/extra/reshax/Release/
-/extra/reshax/Debug/
-/extra/reshax/resources.h
-/extra/reshax/resources.cpp
 *.obj
 *.o
 *.dirstamp
@@ -36,6 +32,7 @@
 /platform/xcode/macosx/Frameworks
 /platform/xcode/shared/Frameworks
 *xcuserdata*
+*.pbxuser
 *.DS_Store
 *.dylib
 *.dmg*

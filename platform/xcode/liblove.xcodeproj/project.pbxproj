@@ -1996,7 +1996,6 @@
 		FA84DE6A277943F6002674C6 /* GraphicsReadback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GraphicsReadback.cpp; sourceTree = "<group>"; };
 		FA84DE6E27795E22002674C6 /* wrap_GraphicsReadback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrap_GraphicsReadback.h; sourceTree = "<group>"; };
 		FA84DE6F27795E22002674C6 /* wrap_GraphicsReadback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wrap_GraphicsReadback.cpp; sourceTree = "<group>"; };
-		FA84DE75277CB3D4002674C6 /* SDL2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = SDL2.xcframework; path = ios/libraries/SDL2.xcframework; sourceTree = "<group>"; };
 		FA84DE79277D4C88002674C6 /* modplug.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = modplug.xcframework; path = ios/libraries/modplug.xcframework; sourceTree = "<group>"; };
 		FA84DE7B277E045E002674C6 /* ogg.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = ogg.xcframework; path = ios/libraries/ogg.xcframework; sourceTree = "<group>"; };
 		FA84DE7D277E0A43002674C6 /* vorbis.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = vorbis.xcframework; path = ios/libraries/vorbis.xcframework; sourceTree = "<group>"; };
@@ -2020,7 +2019,6 @@
 		FA94725F27A6EE1B00817677 /* HTTPRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTTPRequest.cpp; sourceTree = "<group>"; };
 		FA94729927A6F9AC00817677 /* NSURLClient.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NSURLClient.mm; sourceTree = "<group>"; };
 		FA94729A27A6F9AC00817677 /* NSURLClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSURLClient.h; sourceTree = "<group>"; };
-		FA9B4A0716E1578300074F42 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = macosx/Frameworks/SDL2.framework; sourceTree = "<group>"; };
 		FA9D53AA1F5307E900125C6B /* Deprecations.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Deprecations.cpp; sourceTree = "<group>"; };
 		FA9D53AB1F5307E900125C6B /* Deprecations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Deprecations.h; sourceTree = "<group>"; };
 		FA9D8DCF1DEB56C3002CD881 /* pixelformat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pixelformat.cpp; sourceTree = "<group>"; };
@@ -3473,7 +3471,6 @@
 				FA577A7116C719F400860150 /* ogg.framework */,
 				FAAFF04316CB11C700CCDE45 /* OpenAL-Soft.framework */,
 				FA577A7C16C71A2600860150 /* OpenGL.framework */,
-				FA9B4A0716E1578300074F42 /* SDL2.framework */,
 				FA27B3C81B498623008A9DCE /* theora.framework */,
 				FA577A7716C71A0800860150 /* vorbis.framework */,
 			);
@@ -3637,7 +3634,6 @@
 				FACFB752276D7F6F0089F78D /* Lua.xcframework */,
 				FA84DE79277D4C88002674C6 /* modplug.xcframework */,
 				FA84DE7B277E045E002674C6 /* ogg.xcframework */,
-				FA84DE75277CB3D4002674C6 /* SDL2.xcframework */,
 				FA7E9206277E120900C24CB2 /* theora.xcframework */,
 				FA84DE7D277E0A43002674C6 /* vorbis.xcframework */,
 			);
@@ -5839,7 +5835,6 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/macosx/Frameworks/freetype.framework/Headers",
 					"$(PROJECT_DIR)/macosx/Frameworks/Lua.framework/Headers",
-					"$(PROJECT_DIR)/macosx/Frameworks/SDL2.framework/Headers",
 					"$(PROJECT_DIR)/macosx/Frameworks/harfbuzz.framework/Headers",
 				);
 				INFOPLIST_FILE = "macosx/liblove-macosx.plist";
@@ -5875,7 +5870,6 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/macosx/Frameworks/freetype.framework/Headers",
 					"$(PROJECT_DIR)/macosx/Frameworks/Lua.framework/Headers",
-					"$(PROJECT_DIR)/macosx/Frameworks/SDL2.framework/Headers",
 					"$(PROJECT_DIR)/macosx/Frameworks/harfbuzz.framework/Headers",
 				);
 				INFOPLIST_FILE = "macosx/liblove-macosx.plist";
@@ -5912,7 +5906,6 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/macosx/Frameworks/freetype.framework/Headers",
 					"$(PROJECT_DIR)/macosx/Frameworks/Lua.framework/Headers",
-					"$(PROJECT_DIR)/macosx/Frameworks/SDL2.framework/Headers",
 					"$(PROJECT_DIR)/macosx/Frameworks/harfbuzz.framework/Headers",
 				);
 				INFOPLIST_FILE = "macosx/liblove-macosx.plist";

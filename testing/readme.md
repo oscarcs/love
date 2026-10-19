@@ -62,7 +62,6 @@ When finished, the following files will be generated in the `/output` directory 
 - an `XML` file in the style of [JUnit XML](https://www.ibm.com/docs/en/developer-for-zos/14.1?topic=formats-junit-xml-format)
 - a `HTML` file that shows the report + any visual test results
 - a `Markdown` file you can use with [this github action](https://github.com/ellraiser/love-test-report)
-> An example of all types of output can be found in the `/examples`  
 > The visual results of any graphic tests can be found in `/output/actual`
 
 ---
