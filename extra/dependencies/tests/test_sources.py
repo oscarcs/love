@@ -20,6 +20,12 @@ class SourcesTest(unittest.TestCase):
         self.assertEqual(fetch.entries('windows')['luajit']['release_timestamp'], 1784580905)
         self.assertEqual(fetch.entries('windows'), fetch.entries('android'))
 
+    def test_patch_hashes_match_lock(self):
+        for profile in ('linux', 'windows', 'macos', 'ios', 'android'):
+            for entry in fetch.entries(profile).values():
+                for patch in entry.get('patches', []):
+                    self.assertEqual(fetch.digest(fetch.LOCK.parent / patch['file']), patch['sha256'])
+
     def test_bad_download_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

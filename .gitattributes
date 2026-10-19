@@ -3,3 +3,5 @@
 *.c diff=cpp
 *.cpp diff=cpp
 *.h diff=cpp
+# Patch bytes are hashed by the dependency lock, including on Windows.
+extra/dependencies/patches/*.patch text eol=lf -whitespace
