@@ -20,7 +20,11 @@ class SourcesTest(unittest.TestCase):
                 self.assertTrue(entry['url'].startswith('https://'))
                 self.assertRegex(entry['sha256'], r'^[0-9a-f]{64}$')
         self.assertEqual(fetch.entries('windows')['luajit']['release_timestamp'], 1784580905)
-        self.assertEqual(fetch.entries('windows'), fetch.entries('android'))
+        windows, android = fetch.entries('windows'), fetch.entries('android')
+        self.assertEqual({k: v for k, v in windows.items() if k != 'openal'},
+                         {k: v for k, v in android.items() if k != 'openal'})
+        self.assertEqual(windows['openal']['sha256'], android['openal']['sha256'])
+        self.assertEqual(android['openal']['patches'][0]['file'], 'patches/openal-android.patch')
 
     def test_patch_hashes_match_lock(self):
         for profile in ('linux', 'windows', 'macos', 'ios', 'android'):

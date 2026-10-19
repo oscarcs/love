@@ -26,7 +26,10 @@ def entries(profile):
     for name in LIBRARIES:
         use_windows = (profile in ('windows', 'android') and name in WINDOWS_VERSIONS
                        or profile in ('macos', 'ios') and name == 'zlib')
-        selected[name] = lock[name + '-windows' if use_windows else name]
+        key = name + '-windows' if use_windows else name
+        if profile == 'android' and name == 'openal':
+            key = 'openal-android'
+        selected[name] = lock[key]
     return selected
 
 

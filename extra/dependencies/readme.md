@@ -39,6 +39,8 @@ Vorbis architecture check for Windows/Android. Patch hashes are included in the
 source lock and package manifests. `android/opensl_latency.cpp` retains the JNI
 bridge used by the application to set Oboe's device stream defaults; it was
 imported from the same Megasource revision and is added to the OpenAL target.
+The Android OpenAL version-script patch retains its JNI export as well as the
+function implementation.
 
 ## Updating
 

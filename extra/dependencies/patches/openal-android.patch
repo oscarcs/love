@@ -1,0 +1,11 @@
+--- a/libopenal.version
++++ b/libopenal.version
+@@ -188,5 +188,8 @@
+ alSourceQueueBufferLayersSOFT;
+ alUnmapBufferSOFT;
+ 
++# love2d-mod
++Java_org_love2d_android_GameActivity_nativeSetDefaultStreamValues;
++
+ local: *;
+ };
