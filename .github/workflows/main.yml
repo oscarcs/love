@@ -1,5 +1,6 @@
-name: continuous-integration
-on: [push, pull_request]
+name: Manual platform builds and packages
+on:
+  workflow_dispatch:
 
 jobs:
   Linux:

@@ -8,7 +8,12 @@ The test suite in `testing/` covers all the LÖVE APIs, and tests them the same 
 You can run the suite locally like you would run a normal LÖVE project, e.g.:  
 `love testing`
 
+The suite exits with status `0` when no tests fail, or `1` if any test fails. Skipped tests do not count as failures.
+
 See the [test suite README](testing/readme.md) for more info.
+
+[CI](.github/workflows/ci.yml) builds and tests Linux x64 on pull requests and pushes to `main`.
+The [full platform builds and packages](.github/workflows/main.yml) run manually through GitHub Actions.
 
 Compilation
 -----------

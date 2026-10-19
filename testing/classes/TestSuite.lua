@@ -129,7 +129,7 @@ TestSuite = {
             -- otherwise print the final results and export output
             else
               self:printResult()
-              love.event.quit(0)
+              love.event.quit(self.totals[2] > 0 and 1 or 0)
             end
 
           end

@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      SDL_REVISION: 8e37db5e797b6167f3a00d697d816a684bd259c7 # SDL 3.4.10
+      SDL_PREFIX: ${{ github.workspace }}/.ci/sdl-install
+      CCACHE_DIR: ${{ github.workspace }}/.ci/ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_MAXSIZE: 250M
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            build-essential cmake ninja-build pkg-config ccache \
+            libluajit-5.1-dev libfreetype-dev libharfbuzz-dev libopenal-dev \
+            libmodplug-dev libogg-dev libvorbis-dev libtheora-dev zlib1g-dev \
+            libcurl4-openssl-dev libasound2-dev libpulse-dev libudev-dev \
+            libdbus-1-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dri \
+            xvfb xauth openbox wmctrl
+
+      - name: Restore SDL3
+        id: sdl-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.SDL_PREFIX }}
+          key: sdl3-${{ runner.os }}-${{ runner.arch }}-ubuntu24-${{ env.SDL_REVISION }}-v1
+
+      - name: Checkout SDL3
+        if: steps.sdl-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: libsdl-org/SDL
+          ref: ${{ env.SDL_REVISION }}
+          path: .ci/SDL
+
+      - name: Build SDL3
+        if: steps.sdl-cache.outputs.cache-hit != 'true'
+        run: |
+          cmake -S .ci/SDL -B "$RUNNER_TEMP/sdl-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SDL_PREFIX" \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_WAYLAND=OFF \
+            -DSDL_TEST_LIBRARY=OFF -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
+          cmake --build "$RUNNER_TEMP/sdl-build" --parallel 2
+          cmake --install "$RUNNER_TEMP/sdl-build"
+
+      - name: Cache SDL3
+        if: steps.sdl-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.SDL_PREFIX }}
+          key: ${{ steps.sdl-cache.outputs.cache-primary-key }}
+
+      - name: Restore compiler cache
+        id: compiler-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ runner.arch }}-ubuntu24-${{ github.sha }}
+          restore-keys: ccache-${{ runner.os }}-${{ runner.arch }}-ubuntu24-
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$SDL_PREFIX" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: |
+          cmake --build build --target love --parallel 2
+          ccache --show-stats
+
+      - name: Cache compiler output
+        if: steps.compiler-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
+
+      - name: Run test suite (OpenGL)
+        timeout-minutes: 5
+        env:
+          ALSOFT_CONF: ${{ github.workspace }}/testing/resources/alsoft.conf
+          LD_LIBRARY_PATH: ${{ env.SDL_PREFIX }}/lib
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          LOVE_GRAPHICS_DEBUG: '1'
+          SDL_VIDEODRIVER: x11
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' bash <<'TESTS' 2>&1 | tee "$RUNNER_TEMP/lovetest.log"
+          set -euo pipefail
+          openbox > "$RUNNER_TEMP/openbox.log" 2>&1 &
+          window_manager_pid=$!
+          trap 'kill "$window_manager_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..50}; do
+            if wmctrl -m >/dev/null 2>&1; then break; fi
+            sleep 0.1
+          done
+          wmctrl -m
+          ./build/love testing --all --isRunner --renderers opengl
+          TESTS
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-test-failure
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            testing/output/
+            ${{ runner.temp }}/lovetest.log
+            ${{ runner.temp }}/openbox.log
