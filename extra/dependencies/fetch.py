@@ -4,6 +4,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -88,6 +89,11 @@ def fetch(name, entry, directory):
     download(entry['url'], entry['sha256'], archive)
     with tempfile.TemporaryDirectory(prefix=name + '-', dir=directory) as temp:
         source = extract(archive, Path(temp))
+        # Fresh source inputs must invalidate existing object files even when the
+        # upstream archive contains historical timestamps.
+        for path in source.rglob('*'):
+            if path.is_file() and not path.is_symlink():
+                os.utime(path, None)
         for patch in entry.get('patches', []):
             patch_file = LOCK.parent / patch['file']
             if digest(patch_file) != patch['sha256']:
@@ -98,6 +104,21 @@ def fetch(name, entry, directory):
         source.rename(destination)
     marker.write_text(json.dumps(entry, indent=2) + '\n')
     print('Prepared ' + name + ' ' + entry['version'], flush=True)
+
+
+def collect_notices(directory, sources):
+    notices = directory / 'package-assets/licenses'
+    notices.mkdir(parents=True, exist_ok=True)
+    for name in sources:
+        source = directory / name
+        for pattern in ('COPYING*', 'LICENSE*', 'COPYRIGHT*', 'docs/FTL.TXT',
+                        'docs/GPLv2.TXT', 'fmt-*/LICENSE*'):
+            for notice in source.glob(pattern):
+                if notice.is_file():
+                    target = notices / name / notice.relative_to(source)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(notice, target)
+    (notices / 'sources.json').write_text(json.dumps(sources, indent=2) + '\n')
 
 
 def main():
@@ -114,6 +135,7 @@ def main():
         futures = [pool.submit(fetch, name, entry, args.directory) for name, entry in sources.items()]
         for future in futures:
             future.result()
+    collect_notices(args.directory, sources)
     (args.directory / 'sources.json').write_text(json.dumps(sources, indent=2) + '\n')
 
 

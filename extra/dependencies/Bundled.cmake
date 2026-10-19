@@ -1,6 +1,8 @@
 # Dependency sources are downloaded from their original projects, verified by
 # sources.json, and built with recipes owned by this fork.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_LIST_DIR}/sources.json" "${CMAKE_CURRENT_LIST_DIR}/fetch.py")
 if(ANDROID)
   set(LOVE_DEPENDENCY_PROFILE android)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
@@ -131,7 +133,12 @@ else()
 endif()
 
 if(WIN32)
-  set(LOVE_MOVE_DLLS ${LOVE_SDL_TARGET} OpenAL ${LOVE_LUA_RUNTIME})
+  if(LOVE_JIT)
+    set(lua_move_dll "${LOVE_LUAJIT_LIBRARY}")
+  else()
+    set(lua_move_dll love_dep_lua)
+  endif()
+  set(LOVE_MOVE_DLLS ${LOVE_SDL_TARGET} OpenAL ${lua_move_dll})
   set(LOVE_EXTRA_DLLS "$<TARGET_FILE:OpenAL>" ${LOVE_LUA_RUNTIME})
   set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
   include(InstallRequiredSystemLibraries)

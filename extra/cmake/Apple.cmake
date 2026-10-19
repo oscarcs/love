@@ -29,6 +29,7 @@ else()
   install(PROGRAMS "$<TARGET_FILE:${LOVE_SDL_TARGET}>" "$<TARGET_FILE:OpenAL>" ${LOVE_LUA_RUNTIME}
     DESTINATION love.app/Contents/Frameworks)
   install(TARGETS love BUNDLE DESTINATION .)
+  install(DIRECTORY "${LOVE_DEPENDENCY_DIRECTORY}/package-assets/licenses/" DESTINATION love.app/Contents/Resources/licenses)
   install(CODE "
     include(BundleUtilities)
     fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/love.app\" \"\" \"${CMAKE_BINARY_DIR}/dependencies/sdl;${CMAKE_BINARY_DIR}/dependencies/openal;${CMAKE_BINARY_DIR}/dependencies/luajit;${CMAKE_BINARY_DIR}\")
@@ -43,4 +44,17 @@ set_target_properties(love PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${plist}"
 
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
   install(TARGETS love BUNDLE DESTINATION .)
+  install(DIRECTORY "${LOVE_DEPENDENCY_DIRECTORY}/package-assets/licenses/" DESTINATION love.app/licenses)
 endif()
+
+# Include notices in directly built apps as well as installed packages.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  set(love_resource_directory "$<TARGET_BUNDLE_DIR:love>")
+else()
+  set(love_resource_directory "$<TARGET_BUNDLE_DIR:love>/Contents/Resources")
+endif()
+add_custom_command(TARGET love POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E copy_directory
+    "${LOVE_DEPENDENCY_DIRECTORY}/package-assets/licenses" "${love_resource_directory}/licenses"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${love_SOURCE_DIR}/license.txt" "${love_resource_directory}/license.txt"
+  VERBATIM)

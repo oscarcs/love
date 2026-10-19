@@ -57,17 +57,7 @@ def main():
     jit = appdir / 'share/luajit-2.1/jit'
     jit.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(build / 'dependencies/luajit/jit', jit, dirs_exist_ok=True)
-    # Preserve the upstream notices alongside all redistributed dependencies.
-    notices = appdir / 'share/licenses'
-    notices.mkdir(parents=True, exist_ok=True)
-    for source in (root / '.deps/linux').iterdir():
-        if source.is_dir():
-            for pattern in ('COPYING*', 'LICENSE*', 'COPYRIGHT*', 'FTL.TXT', 'docs/FTL.TXT', 'docs/GPLv2.TXT'):
-                for notice in source.glob(pattern):
-                    if notice.is_file():
-                        target = notices / source.name / notice.name
-                        target.parent.mkdir(exist_ok=True)
-                        shutil.copy2(notice, target)
+    shutil.copytree(root / '.deps/linux/package-assets/licenses', appdir / 'share/licenses', dirs_exist_ok=True)
     binaries = [appdir / 'bin/love'] + [p for p in libraries.iterdir() if p.is_file() and not p.is_symlink()]
     for binary in binaries:
         symbol = symbols / (binary.name + '.debug')

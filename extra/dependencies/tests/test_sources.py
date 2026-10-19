@@ -1,5 +1,7 @@
 """Exercise source verification and extraction without network access."""
 import hashlib
+import io
+import time
 from pathlib import Path
 import sys
 import tarfile
@@ -45,6 +47,20 @@ class SourcesTest(unittest.TestCase):
             cache.write_bytes(b'corrupt cached archive')
             fetch.download(source.as_uri(), hashlib.sha256(source.read_bytes()).hexdigest(), cache)
             self.assertEqual(source.read_bytes(), cache.read_bytes())
+
+    def test_new_sources_invalidate_old_object_timestamps(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / 'upstream.tar.gz'
+            with tarfile.open(archive, 'w:gz') as contents:
+                member = tarfile.TarInfo('source/library.c')
+                member.size, member.mtime = 3, 1
+                contents.addfile(member, io.BytesIO(b'new'))
+            before = time.time() - 1
+            entry = {'version': 'test', 'url': archive.as_uri(), 'sha256': fetch.digest(archive)}
+            fetch.fetch('library', entry, root)
+            self.assertGreater((root / 'library/library.c').stat().st_mtime, before)
+            self.assertEqual((root / 'library/library.c').read_bytes(), b'new')
 
     def test_archive_cannot_escape_directory(self):
         for path, link in [('source/../../escape', None), ('source/link', '../../escape')]:

@@ -32,7 +32,7 @@ Compilation
 
 All platforms build from this checkout. Dependency sources, versions, hashes, and
 recipes are owned here; no sibling LÖVE build repository is needed.
-Use CMake 3.21+, Python 3.9+, and the platform's compiler/SDK. Bundled Unix builds
+Use CMake 3.21+, Python 3.9+, Git, and the platform's compiler/SDK. Bundled Unix builds
 also need `make` for LuaJIT.
 
 ### Windows

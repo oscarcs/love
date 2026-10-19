@@ -56,8 +56,8 @@ The extracted source directories are working copies; delete them to discard
 local edits. No automatic system-library fallback is used in bundled builds.
 
 The original third-party licenses remain in each source archive. The engine's
-aggregate `license.txt` is distributed with packages, and the AppImage also
-includes collected source license notices. The Android platform import retains
+aggregate `license.txt` and collected original dependency notices are included
+in desktop packages and Android assets. The Android platform import retains
 its own license and provenance in `platform/android/readme.md`.
 
 Host packages, compilers, SDKs, and runner images can still change. Source locking

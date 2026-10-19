@@ -123,6 +123,7 @@ android {
 
     sourceSets {
         main {
+            assets.srcDir '../../../.deps/android/package-assets'
             java {
                 srcDir '../../../.deps/android/sdl/android-project/app/src/main/java'
                 srcDir 'src/main/java'

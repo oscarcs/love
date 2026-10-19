@@ -1964,6 +1964,9 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 	# CPack
 	###################################
 	install(TARGETS love lovec liblove RUNTIME DESTINATION .)
+	if(LOVE_DEPENDENCIES STREQUAL "BUNDLED")
+		install(DIRECTORY "${LOVE_DEPENDENCY_DIRECTORY}/package-assets/licenses/" DESTINATION licenses)
+	endif()
 	install(PROGRAMS $<TARGET_FILE:${LOVE_SDL_TARGET}> DESTINATION .)
 
 	# Include LuaJIT tooling in the portable Windows package.
