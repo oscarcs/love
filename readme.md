@@ -69,7 +69,7 @@ With Xcode and its command-line tools installed:
 ```sh
 cmake -S . -B build/macos -DLOVE_DEPENDENCIES=BUNDLED \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=arm64 \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 cmake --build build/macos --target love --parallel 2
 python3 extra/packaging/macos.py --build build/macos --output build/dist
 ```
@@ -85,13 +85,12 @@ With Xcode and the iOS SDK installed:
 ```sh
 cmake -S . -B build/ios -G Xcode -DLOVE_DEPENDENCIES=BUNDLED \
   -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=18.0 \
   -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
 cmake --build build/ios --target love --config Release -- CODE_SIGNING_ALLOWED=NO
 ```
 
-Use a deployment target supported by your installed SDK (Xcode 27 requires at
-least iOS 15). Simulator builds are unsigned compilation checks. Device builds
+The minimum supported iOS version is 18. Simulator builds are unsigned compilation checks. Device builds
 require the device SDK and your signing configuration.
 
 ### Android

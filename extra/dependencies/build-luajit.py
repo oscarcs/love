@@ -55,12 +55,12 @@ def main():
             flags = '-arch ' + a.architecture + ' -isysroot ' + a.sdk
             if a.profile == 'ios':
                 minimum = '-mios-simulator-version-min=' if 'simulator' in a.sdk.lower() else '-mios-version-min='
-                flags += ' ' + minimum + (a.deployment_target or '13.0')
+                flags += ' ' + minimum + (a.deployment_target or '18.0')
                 command += ['TARGET_SYS=iOS']
             else:
-                flags += ' -mmacosx-version-min=' + (a.deployment_target or '11.0')
+                flags += ' -mmacosx-version-min=' + (a.deployment_target or '15.0')
             command += ['CC=' + a.compiler, 'HOST_CC=' + a.compiler, 'TARGET_FLAGS=' + flags]
-            os.environ['MACOSX_DEPLOYMENT_TARGET'] = a.deployment_target or '11.0'
+            os.environ['MACOSX_DEPLOYMENT_TARGET'] = a.deployment_target or '15.0'
         subprocess.run(command, cwd=work, check=True)
         built = work / 'src' / ('libluajit.a' if a.profile == 'ios' else 'libluajit.so')
         output = {'linux': 'libluajit-5.1.so.2', 'macos': 'libluajit-5.1.2.dylib',

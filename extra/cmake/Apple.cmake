@@ -9,8 +9,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     "-framework AudioToolbox" "-framework CoreMotion" "-framework GameController"
     "-framework CoreGraphics" "-framework CoreHaptics" "-framework OpenGLES")
   target_link_options(love PRIVATE -ObjC)
-  set_target_properties(love PROPERTIES XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
-    XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO)
+  set_target_properties(love PROPERTIES XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2")
   set_target_properties(love PROPERTIES XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "iOS AppIcon")
   target_sources(love PRIVATE "${love_SOURCE_DIR}/platform/apple/Images.xcassets" "${love_SOURCE_DIR}/platform/apple/lovedocument.icns")
   set_source_files_properties("${love_SOURCE_DIR}/platform/apple/Images.xcassets" "${love_SOURCE_DIR}/platform/apple/lovedocument.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
@@ -37,6 +36,7 @@ else()
 endif()
 set_target_properties(love PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${plist}"
   MACOSX_BUNDLE_GUI_IDENTIFIER "org.love2d.love"
+  XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.love2d.love"
   MACOSX_BUNDLE_BUNDLE_NAME "LÖVE"
   MACOSX_BUNDLE_SHORT_VERSION_STRING "${LOVE_VERSION_STR}"
   MACOSX_BUNDLE_BUNDLE_VERSION "${LOVE_VERSION_STR}.${LOVE_VERSION_REV}")

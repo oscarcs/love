@@ -139,7 +139,7 @@ jobs:
       - name: Build ARM64 app from source
         run: |
           cmake -S source -B build -DLOVE_DEPENDENCIES=BUNDLED -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 2>&1 | tee "$RUNNER_TEMP/configure.log"
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 2>&1 | tee "$RUNNER_TEMP/configure.log"
           cmake --build build --target love --parallel 3 2>&1 | tee "$RUNNER_TEMP/build.log"
       - name: Package app and debug symbols
         run: |

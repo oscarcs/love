@@ -25,6 +25,14 @@ endif()
 
 cmake_minimum_required(VERSION 3.21)
 
+if(CMAKE_HOST_APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+	if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+		set(CMAKE_OSX_DEPLOYMENT_TARGET 18.0 CACHE STRING "Minimum iOS version")
+	else()
+		set(CMAKE_OSX_DEPLOYMENT_TARGET 15.0 CACHE STRING "Minimum macOS version")
+	endif()
+endif()
+
 project(love)
 
 if(APPLE)
@@ -1913,7 +1921,7 @@ else()
 endif()
 
 target_sources(love PRIVATE src/love.cpp)
-target_link_libraries(love liblove)
+target_link_libraries(love PRIVATE liblove)
 set_target_properties(love PROPERTIES
 	C_VISIBILITY_PRESET hidden
 	CXX_VISIBILITY_PRESET hidden
