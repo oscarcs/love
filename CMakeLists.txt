@@ -27,20 +27,18 @@ cmake_minimum_required(VERSION 3.19)
 
 project(love)
 
+if(APPLE)
+	enable_language(OBJC OBJCXX)
+endif()
+
 set(CMAKE_MODULE_PATH "${love_SOURCE_DIR}/extra/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Needed for shared libs on Linux. (-fPIC).
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)	# Allow grouping projects in Visual Studio
 
-if(APPLE)
-	message(WARNING "CMake is not an officially supported build system for love on Apple platforms.")
-	message(WARNING "Use the prebuilt .app or the xcode project in platform/xcode/ instead.")
-endif()
-
 if(MINGW)
 	message(WARNING "MinGW is not an officially supported build system for love.")
-	message(WARNING "Use megasource with Visual Studio instead.")
-	message(WARNING "Please see https://github.com/love2d/megasource")
+	message(WARNING "Use Visual Studio with LOVE_DEPENDENCIES=BUNDLED instead.")
 endif()
 
 include(LoveMacros)
@@ -82,18 +80,11 @@ else()
 endif()
 
 
-if(APPLE)
-	set(LOVE_DEFAULT_JIT FALSE)
-else()
-	set(LOVE_DEFAULT_JIT TRUE)
-endif()
+set(LOVE_DEFAULT_JIT TRUE)
 
 option(LOVE_JIT "Use LuaJIT" ${LOVE_DEFAULT_JIT})
 
 if(LOVE_JIT)
-	if(APPLE)
-		message(WARNING "JIT not supported yet on Mac.")
-	endif()
 	message(STATUS "LuaJIT: Enabled")
 else()
 	message(STATUS "LuaJIT: Disabled")
@@ -112,65 +103,11 @@ add_library(lovedep::Ogg INTERFACE IMPORTED)
 add_library(lovedep::Zlib INTERFACE IMPORTED)
 add_library(lovedep::Lua INTERFACE IMPORTED)
 
-if(MEGA)
-	# LOVE_MSVC_DLLS contains runtime DLLs that should be bundled with the love
-	# binary (in e.g. the installer). Example: msvcp140.dll.
-	set(LOVE_MSVC_DLLS ${MEGA_MSVC_DLLS})
-
-	# These DLLs are moved next to the love binary in a post-build step to
-	# love runnable from inside Visual Studio.
-	#
-	# LOVE_MOVE_DLLS can contain CMake targets, in which case the target's
-	# output is assumed to be a DLL, or it can contain paths to actual files.
-	# We detect whether or not each item is a target, and take the appropriate
-	# action.
-	set(LOVE_MOVE_DLLS
-		${MEGA_SDL3}
-		${MEGA_OPENAL}
-	)
-
-	# LOVE_EXTRA_DLLS are non-runtime DLLs which should be bundled with the
-	# love binary in installers, etc. It's only needed for external
-	# (non-CMake) targets, i.e. LuaJIT.
-	if(NOT DEFINED LOVE_EXTRA_DLLS)
-		set(LOVE_EXTRA_DLLS)
-	endif()
-
-	target_link_libraries(lovedep::SDL INTERFACE ${MEGA_SDL3})
-	target_link_libraries(lovedep::Freetype INTERFACE ${MEGA_FREETYPE})
-	target_link_libraries(lovedep::Harfbuzz INTERFACE ${MEGA_HARFBUZZ})
-	target_link_libraries(lovedep::OpenAL INTERFACE ${MEGA_OPENAL})
-	target_link_libraries(lovedep::Modplug INTERFACE ${MEGA_MODPLUG})
-	target_link_libraries(lovedep::Theora INTERFACE ${MEGA_LIBTHEORA})
-	target_link_libraries(lovedep::Vorbis INTERFACE ${MEGA_LIBVORBIS} ${MEGA_LIBVORBISFILE})
-	target_link_libraries(lovedep::Ogg INTERFACE ${MEGA_LIBOGG})
-	target_link_libraries(lovedep::Zlib INTERFACE ${MEGA_ZLIB})
-
-	if(LOVE_JIT)
-		target_include_directories(lovedep::Lua INTERFACE ${MEGA_LUAJIT_INCLUDE})
-		target_link_libraries(lovedep::Lua INTERFACE ${MEGA_LUAJIT_LIB})
-		set(LOVE_EXTRA_DLLS ${LOVE_EXTRA_DLLS} ${MEGA_LUAJIT_DLL})
-		set(LOVE_EXTRA_DEPENDECIES luajit)
-		set(LOVE_MOVE_DLLS
-			${LOVE_MOVE_DLLS}
-			${MEGA_LUAJIT_DLL}
-		)
-	else()
-		# MEGA_LUA51 is a CMake target, so includes are handled
-		# automatically.
-		target_link_libraries(lovedep::Lua INTERFACE ${MEGA_LUA51})
-		set(LOVE_MOVE_DLLS
-			${LOVE_MOVE_DLLS}
-			${MEGA_LUA51}
-		)
-	endif()
-else()
-	if(MSVC OR ANDROID)
-		message(FATAL_ERROR "
-It is currently only possible to build with megasource on Windows and Android.
-Please see https://github.com/love2d/megasource
-")
-	endif()
+set(LOVE_DEPENDENCIES SYSTEM CACHE STRING "Dependency provider: SYSTEM or BUNDLED")
+set_property(CACHE LOVE_DEPENDENCIES PROPERTY STRINGS SYSTEM BUNDLED)
+if(LOVE_DEPENDENCIES STREQUAL "BUNDLED")
+	include(extra/dependencies/Bundled.cmake)
+elseif(LOVE_DEPENDENCIES STREQUAL "SYSTEM")
 
 	# required for enet
 	add_definitions(-D HAS_SOCKLEN_T)
@@ -220,11 +157,13 @@ Please see https://github.com/love2d/megasource
 		target_include_directories(lovedep::Lua INTERFACE ${LUA_INCLUDE_DIR})
 		target_link_libraries(lovedep::Lua INTERFACE ${LUA_LIBRARY})
 	endif()
+else()
+	message(FATAL_ERROR "LOVE_DEPENDENCIES must be SYSTEM or BUNDLED")
 endif()
 
-###
-### No Megasource-specific stuff beyond this point!
-###
+if(NOT WIN32)
+	add_compile_definitions(HAS_SOCKLEN_T)
+endif()
 
 if(MSVC)
 	set(DISABLE_WARNING_FLAG -W0)
@@ -1867,7 +1806,12 @@ if(MINGW)
 	set(CMAKE_RC_FLAGS ${CMAKE_RC_FLAGS} "-c 65001 --preprocessor-arg=-finput-charset=UTF-16LE")
 endif()
 
-add_library(liblove SHARED
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	set(LOVE_LIBRARY_TYPE STATIC)
+else()
+	set(LOVE_LIBRARY_TYPE SHARED)
+endif()
+add_library(liblove ${LOVE_LIBRARY_TYPE}
 	src/modules/love/love.cpp
 	src/modules/love/love.h
 	# These are here so they show up in Visual Studio:
@@ -2011,16 +1955,16 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 	# CPack
 	###################################
 	install(TARGETS love lovec liblove RUNTIME DESTINATION .)
-	install(PROGRAMS $<TARGET_FILE:${MEGA_SDL3}> DESTINATION .)
+	install(PROGRAMS $<TARGET_FILE:${LOVE_SDL_TARGET}> DESTINATION .)
 
 	# Include LuaJIT tooling in the portable Windows package.
-	if(LOVE_JIT AND MEGA)
-		install(DIRECTORY "${CMAKE_BINARY_DIR}/libs/LuaJIT/src/jit"
+	if(LOVE_JIT AND LOVE_LUAJIT_DIRECTORY)
+		install(DIRECTORY "${LOVE_LUAJIT_DIRECTORY}/jit"
 			DESTINATION . FILES_MATCHING PATTERN "*.lua")
 	endif()
 
 	set(CPACK_GENERATOR ZIP)
-	if(MEGA_ARM64)
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM64|aarch64|arm64)$")
 		set(CPACK_SYSTEM_NAME woa64)
 	endif()
 
@@ -2092,4 +2036,12 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 			DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pixmaps)
 	install(FILES platform/unix/application-x-love-game.svg
 			DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/mimetypes)
+endif()
+
+if(LOVE_DEPENDENCIES STREQUAL "BUNDLED" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/runtime-$<CONFIG>.txt"
+		CONTENT "$<TARGET_FILE:liblove>\n$<TARGET_FILE:${LOVE_SDL_TARGET}>\n$<TARGET_FILE:OpenAL>\n${LOVE_LUAJIT_LIBRARY}\n")
+endif()
+if(APPLE AND LOVE_DEPENDENCIES STREQUAL "BUNDLED")
+	include(extra/cmake/Apple.cmake)
 endif()
