@@ -64,3 +64,27 @@ its own license and provenance in `platform/android/readme.md`.
 
 Host packages, compilers, SDKs, and runner images can still change. Source locking
 and manifests do not promise bit-for-bit reproducibility.
+
+## Cutover validation
+
+The standalone build paths were exercised on native GitHub runners:
+
+| Target | Coverage |
+| --- | --- |
+| [Linux x64](https://github.com/oscarcs/love/actions/runs/39269768020/job/118118681942) | AppImage, symbols, packaged OpenGL API tests; x86-64 Theora acceleration retained |
+| [Linux ARM64](https://github.com/oscarcs/love/actions/runs/39269768020/job/118118681582) | AppImage, symbols, packaged OpenGL API tests |
+| [Windows x64](https://github.com/oscarcs/love/actions/runs/39269768020/job/118118681217) | Portable ZIP, PDBs, packaged OpenGL and GLES API tests |
+| [macOS ARM64](https://github.com/oscarcs/love/actions/runs/39271149452/job/118123466413) | macOS 15 app ZIP, dSYMs, packaged OpenGL and Metal API tests |
+| [iOS simulator](https://github.com/oscarcs/love/actions/runs/39269779683/job/118118719998) | iOS 18 ARM64 application compilation and linking |
+| [Android Release](https://github.com/oscarcs/love/actions/runs/39273162863/job/118130513514) | APK and all three AAB variants; ARM32, ARM64, x64; native library closure and audio JNI export |
+
+Artifact audits verified manifest hashes, desktop executable architectures,
+Windows runtime DLLs and LuaJIT tooling, Linux symbol archives, and matching
+macOS binary/dSYM UUIDs. Source-fetch tests cover invalid archive hashes,
+corrupt cached downloads, escaping archive paths, patch hashes, and timestamp
+invalidation after source changes. Mobile validation covers builds and package
+integrity; API suites are exercised by the desktop jobs.
+
+The macOS link points to its successful rerun after a transient GitHub artifact
+service DNS failure in the combined desktop matrix. The final implementation's
+[regular Linux CI](https://github.com/oscarcs/love/actions/runs/39274175426) also passed.
