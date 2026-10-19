@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {"major": 3, "minor": 21, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "bundled",
+      "displayName": "Build pinned dependency sources",
+      "binaryDir": "${sourceDir}/build/bundled",
+      "cacheVariables": {
+        "LOVE_DEPENDENCIES": "BUNDLED",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "system",
+      "displayName": "Use installed dependencies",
+      "binaryDir": "${sourceDir}/build/system",
+      "cacheVariables": {
+        "LOVE_DEPENDENCIES": "SYSTEM",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ],
+  "buildPresets": [
+    {"name": "bundled", "configurePreset": "bundled", "configuration": "RelWithDebInfo", "targets": ["love"], "jobs": 2},
+    {"name": "system", "configurePreset": "system", "configuration": "RelWithDebInfo", "targets": ["love"], "jobs": 2}
+  ]
+}

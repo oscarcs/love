@@ -30,37 +30,83 @@ See [packaging maintenance](extra/packaging/readme.md) for dependency pins and v
 Compilation
 -----------
 
+All platforms build from this checkout. Dependency sources, versions, hashes, and
+recipes are owned here; no sibling LÖVE build repository is needed.
+Use CMake 3.21+, Python 3.9+, and the platform's compiler/SDK. Bundled Unix builds
+also need `make` for LuaJIT.
+
 ### Windows
-Follow the instructions at the upstream [Megasource](https://github.com/love2d/megasource) repository page, using this fork as the LÖVE source checkout.
 
-### *nix
-Because in-tree builds are not allowed, the Makefiles needs to be generated in a separate build directory. In this example, folder named `build` is used:
+With Visual Studio's C++ build tools installed:
 
-	$ cmake -B build -S. --install-prefix $PWD/prefix # this will create the directory `build/`.
-	$ cmake --build build --target install -j$(nproc) # this will build with all cores and put the files in `prefix/`.
+```powershell
+cmake -S . -B build/windows -A x64 -DLOVE_DEPENDENCIES=BUNDLED
+cmake --build build/windows --config Release --parallel 2
+cpack --config build/windows/CPackConfig.cmake -C Release -G ZIP
+```
 
-> [!NOTE]  
-> CMake 3.15 and earlier doesn't support `--install-prefix`. In that case, use `-DCMAKE_INSTALL_PREFIX=` instead.
+### Linux
 
-### macOS
-Download or clone the upstream [Apple dependencies repository](https://github.com/love2d/love-apple-dependencies) and copy, move, or symlink the `macOS/Frameworks` subfolder into love's `platform/xcode/macosx` folder and the `shared` subfolder into love's `platform/xcode` folder.
+Install a C/C++ toolchain, CMake, Python, make, pkg-config, and the development
+packages for your system's windowing, audio, and graphics APIs. The complete
+Ubuntu package list is in the [Linux packaging workflow](.github/workflows/package-linux.yml).
+Then build the engine and its pinned libraries:
 
-Then use the Xcode project found at `platform/xcode/love.xcodeproj` to build the `love-macosx` target.
+```sh
+cmake --preset bundled
+cmake --build --preset bundled
+./build/bundled/love testing --all
+```
+
+To use already-installed SDL3, LuaJIT, FreeType, HarfBuzz, OpenAL, ModPlug, Ogg,
+Vorbis, Theora, and zlib development packages, use the `system` preset instead.
+Ordinary CMake installation is available with `cmake --install build/bundled --prefix "$PWD/prefix"`.
+
+### macOS ARM64
+
+With Xcode and its command-line tools installed:
+
+```sh
+cmake -S . -B build/macos -DLOVE_DEPENDENCIES=BUNDLED \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+cmake --build build/macos --target love --parallel 2
+python3 extra/packaging/macos.py --build build/macos --output build/dist
+```
+
+The packaging command bundles runtime libraries, retains dSYMs, and signs the
+app ad hoc. For an editable Xcode project, configure with `-G Xcode` in a separate
+build directory, then build the `love` target with `--config RelWithDebInfo`.
 
 ### iOS
-Building for iOS requires macOS and Xcode.
 
-Download the Apple dependency archive corresponding to the LÖVE version being used from the [upstream LÖVE releases](https://github.com/love2d/love/releases),
-unzip it, and place the `iOS/libraries` subfolder into love's `platform/xcode/ios` folder and the `shared` subfolder into love's `platform/xcode` folder.
+With Xcode and the iOS SDK installed:
 
-Or, download or clone the upstream [Apple dependencies repository](https://github.com/love2d/love-apple-dependencies) and copy, move, or symlink the `iOS/libraries` subfolder into love's `platform/xcode/ios` folder and the `shared` subfolder into love's `platform/xcode` folder.
+```sh
+cmake -S . -B build/ios -G Xcode -DLOVE_DEPENDENCIES=BUNDLED \
+  -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+  -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+cmake --build build/ios --target love --config Release -- CODE_SIGNING_ALLOWED=NO
+```
 
-Then use the Xcode project found at `platform/xcode/love.xcodeproj` to build the `love-ios` target.
-
-See the [iOS README](readme-iOS.rtf) for more information.
+Use a deployment target supported by your installed SDK (Xcode 27 requires at
+least iOS 15). Simulator builds are unsigned compilation checks. Device builds
+require the device SDK and your signing configuration.
 
 ### Android
-Visit the upstream [Android build repository](https://github.com/love2d/love-android) for build instructions, using this fork as the LÖVE source checkout.
+
+The application project lives in [platform/android](platform/android/readme.md).
+Install Java 17 and the Android SDK, set `ANDROID_HOME`, then:
+
+```sh
+python3 extra/dependencies/fetch.py --profile android --directory .deps/android
+cd platform/android
+./gradlew assembleNormalRecordRelease
+```
+
+See [dependency maintenance](extra/dependencies/readme.md) for source pins,
+platform differences, and updating instructions.
 
 Dependencies
 ------------
@@ -68,7 +114,7 @@ Dependencies
 - SDL3
 - OpenGL 3.3+ / OpenGL ES 3.0+ / Vulkan / Metal
 - OpenAL
-- Lua / LuaJIT / LLVM-lua
+- LuaJIT / Lua 5.1
 - FreeType
 - harfbuzz
 - ModPlug

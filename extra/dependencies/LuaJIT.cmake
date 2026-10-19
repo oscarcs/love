@@ -39,7 +39,7 @@ add_custom_command(OUTPUT "${LOVE_LUAJIT_LIBRARY}" "${luajit_dir}/luajit.h" ${lu
     --directory "${luajit_dir}" --profile "${LOVE_DEPENDENCY_PROFILE}"
     --architecture "${luajit_arch}" --compiler "${CMAKE_C_COMPILER}"
     --sdk "${luajit_sdk}" --deployment-target "${CMAKE_OSX_DEPLOYMENT_TARGET}"
-    --android-api "${ANDROID_PLATFORM_LEVEL}"
+    --android-api "${CMAKE_SYSTEM_VERSION}"
   DEPENDS "${recipes}/build-luajit.py" "${recipes}/sources.json" VERBATIM)
 add_custom_target(love_build_luajit DEPENDS "${LOVE_LUAJIT_LIBRARY}" "${luajit_dir}/luajit.h")
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")

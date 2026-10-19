@@ -16,13 +16,18 @@ ROOT = Path(__file__).resolve().parents[2]
 LOCK = Path(__file__).with_name('sources.json')
 LIBRARIES = ('sdl', 'luajit', 'openal', 'zlib', 'freetype', 'harfbuzz',
              'ogg', 'vorbis', 'theora', 'modplug', 'bzip2', 'lua')
-WINDOWS_VERSIONS = {'zlib', 'freetype', 'ogg', 'vorbis', 'theora', 'modplug'}
+WINDOWS_VERSIONS = {'luajit', 'zlib', 'freetype', 'ogg', 'vorbis', 'theora', 'modplug'}
 
 
 def entries(profile):
     lock = json.loads(LOCK.read_text())
-    return {name: lock[name + '-windows' if profile in ('windows', 'android')
-                       and name in WINDOWS_VERSIONS or profile in ('macos', 'ios') and name == 'zlib' else name] for name in LIBRARIES}
+    selected = {}
+    for name in LIBRARIES:
+        use_windows = (profile in ('windows', 'android') and name in WINDOWS_VERSIONS
+                       or profile in ('macos', 'ios') and name == 'zlib')
+        selected[name] = lock[name + '-windows' if use_windows else name]
+    return selected
+
 
 
 def digest(path):

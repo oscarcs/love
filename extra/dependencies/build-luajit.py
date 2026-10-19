@@ -1,6 +1,7 @@
 """Build the locked LuaJIT source with its native make/MSVC build system."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shutil
@@ -22,7 +23,8 @@ def main():
     shutil.copytree(source, work)
     # A source archive has no Git metadata. Never derive the rolling version from
     # the enclosing fork's unrelated Git history.
-    (work / '.relver').write_text('1784580905\n')
+    entry = json.loads((source / '.love-source.json').read_text())
+    (work / '.relver').write_text(str(entry['release_timestamp']) + '\n')
     directory.mkdir(parents=True, exist_ok=True)
     if a.profile == 'windows':
         vswhere = Path(os.environ['ProgramFiles(x86)']) / 'Microsoft Visual Studio/Installer/vswhere.exe'
@@ -38,7 +40,7 @@ def main():
         for name in ('lua51.dll', 'lua51.lib', 'lua51.pdb'):
             shutil.copy2(work / 'src' / name, directory / name)
     else:
-        command = ['make', '-j2', 'amalg', 'BUILDMODE=' + ('static' if a.profile == 'ios' else 'dynamic')]
+        command = ['make', '-j2', 'amalg', 'CCDEBUG=-g', 'BUILDMODE=' + ('static' if a.profile == 'ios' else 'dynamic')]
         if a.profile == 'android':
             triples = {'arm64-v8a': 'aarch64-linux-android', 'armeabi-v7a': 'armv7a-linux-androideabi',
                        'x86_64': 'x86_64-linux-android', 'x86': 'i686-linux-android'}
@@ -54,7 +56,7 @@ def main():
             if a.profile == 'ios':
                 minimum = '-mios-simulator-version-min=' if 'simulator' in a.sdk.lower() else '-mios-version-min='
                 flags += ' ' + minimum + (a.deployment_target or '13.0')
-                command += ['TARGET_SYS=iOS', 'CROSS=' + str(Path(a.compiler).parent) + '/']
+                command += ['TARGET_SYS=iOS']
             else:
                 flags += ' -mmacosx-version-min=' + (a.deployment_target or '11.0')
             command += ['CC=' + a.compiler, 'HOST_CC=' + a.compiler, 'TARGET_FLAGS=' + flags]

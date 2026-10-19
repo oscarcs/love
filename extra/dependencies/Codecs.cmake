@@ -38,7 +38,7 @@ add_library(love_dep_modplug STATIC ${modplug_sources})
 set_target_properties(love_dep_modplug PROPERTIES CXX_STANDARD 11)
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/dependencies/include/libmodplug")
 configure_file("${dep}/modplug/src/modplug.h" "${CMAKE_BINARY_DIR}/dependencies/include/libmodplug/modplug.h" COPYONLY)
-target_include_directories(love_dep_modplug PUBLIC "${CMAKE_BINARY_DIR}/dependencies/include"
+target_include_directories(love_dep_modplug PUBLIC "${CMAKE_BINARY_DIR}/dependencies/include" "${dep}/modplug/src"
   PRIVATE "${dep}/modplug/src" "${dep}/modplug/src/libmodplug")
 target_compile_definitions(love_dep_modplug PUBLIC MODPLUG_STATIC PRIVATE HAVE_STDINT_H HAVE_INTTYPES_H)
 if(NOT WIN32)

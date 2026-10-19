@@ -6,17 +6,25 @@ The Linux helper workflow is called by the desktop workflow. **Mobile builds** i
 
 ## Build inputs
 
-The existing upstream build systems remain in use:
+Dependency sources and build recipes live in `extra/dependencies`; see its
+[maintenance guide](../dependencies/readme.md). Desktop and mobile workflows
+check out only this fork. The Android application project is in `platform/android`.
+Apple builds use CMake-generated application targets instead of prebuilt frameworks.
 
-- AppImage recipe: `love2d/love-appimage-source`, pinned in `.github/workflows/package-linux.yml`.
-- Windows/Android dependencies: `love2d/megasource`, pinned in the desktop and mobile workflows.
-- Apple dependencies: `love2d/love-apple-dependencies`, pinned in both workflows.
-- Android build: `love2d/love-android`, pinned in the mobile workflow.
-- Linux Git dependencies and AppImageTool: pinned in `prepare-appimage.py`. The script prefetches exact commits into the directories expected by the pinned Makefile and verifies AppImageTool's SHA-256. The upstream recipe's versioned source archives use HTTPS; their hashes are recorded in the manifest.
-- Windows software test driver: fixed Mesa 26.2.4 archive, verified against the checksum in the desktop workflow. Its DLLs are copied only into the extracted test package, after the distributable ZIP has been created.
-- GitHub actions: pinned to commit SHAs with major-version comments.
+The Linux `appimage.py` script assembles the CMake install tree, adds its runtime
+libraries and LuaJIT tooling, separates debug symbols, checks for missing/build-tree
+library dependencies, and invokes AppImageTool 1.9.1 with a verified checksum.
+Windows uses the root CPack ZIP configuration. `macos.py` installs and relocates the
+app's libraries, creates dSYMs, strips symbols, signs the app ad hoc, and creates ZIPs.
 
-Update repeated pins together. When changing the AppImage recipe, check its dependency directory names and archive versions against `prepare-appimage.py`. Host packages, runner images, and transitive download contents can still change; the manifests describe the inputs used, rather than promising bit-for-bit reproducible builds.
+Windows software tests use the fixed Mesa 26.2.4 archive and checksum in the
+workflow. Those DLLs are copied only to the extracted test package. GitHub actions
+remain pinned to commit SHAs. Android's Gradle wrapper has a fixed distribution
+version and SHA-256.
+
+Each package manifest includes the engine commit, selected dependency source
+URLs/versions/hashes, and final artifact hashes. Host tools and packages remain
+external inputs; the builds are not claimed to be bit reproducible.
 
 ## Validation
 
