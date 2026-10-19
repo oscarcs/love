@@ -1736,6 +1736,8 @@ add_library(love_3p_spirv_cross
 # tinyexr has no implementation files of its own.
 #add_library(love_3p_tinyexr
 #	src/libraries/tinyexr/tinyexr.h
+#	src/libraries/tinyexr/exr_reader.hh
+#	src/libraries/tinyexr/streamreader.hh
 #)
 
 #

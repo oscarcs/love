@@ -140,7 +140,7 @@ static void writeEXRChannels(int width, int height, int components, const int *c
 
 FormatHandler::DecodedImage EXRHandler::decode(Data *data)
 {
-	const char *err = "unknown error";
+	const char *err = nullptr;
 	auto mem = (const unsigned char *) data->getData();
 	size_t memsize = data->getSize();
 	DecodedImage img;
@@ -164,14 +164,13 @@ FormatHandler::DecodedImage EXRHandler::decode(Data *data)
 			throw love::Exception("Could not parse EXR image header: %s", err);
 
 		if (LoadEXRImageFromMemory(&exrImage, &exrHeader, mem, memsize, &err) != TINYEXR_SUCCESS)
-		{
-			FreeEXRHeader(&exrHeader);
 			throw love::Exception("Could not decode EXR image: %s", err);
-		}
 	}
 	catch (love::Exception &)
 	{
 		FreeEXRErrorMessage(err);
+		FreeEXRHeader(&exrHeader);
+		FreeEXRImage(&exrImage);
 		throw;
 	}
 

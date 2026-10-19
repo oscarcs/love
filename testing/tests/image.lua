@@ -114,6 +114,28 @@ love.test.image.ImageData = function(test)
     test:assertFalse(pcall(love.image.newImageData, truncated), 'reject truncated PNG')
   end
 
+  for _, format in ipairs({'rgba16f', 'rgba32f', 'rgba32ui'}) do
+    local source
+    if format == 'rgba32ui' then
+      local pixels = string.rep(love.data.pack('string', '<I4I4I4I4', 17, 31, 65537, 4294967295), 35)
+      source = love.image.newImageData(7, 5, format, pixels)
+    else
+      source = love.image.newImageData(7, 5, format)
+      source:mapPixel(function(x, y) return x / 4, y / 2, -0.25, 1 end)
+    end
+    local encoded = source:encode('exr')
+    local decoded = love.image.newImageData(encoded)
+    test:assertEquals(format, decoded:getFormat(), format .. ' EXR format')
+    test:assertEquals(source:getString(), decoded:getString(), format .. ' EXR round trip')
+    test:assertEquals(7, decoded:getWidth(), 'EXR width')
+    test:assertEquals(5, decoded:getHeight(), 'EXR height')
+    local bytes = encoded:getString()
+    for _, size in ipairs({8, #bytes - 1}) do
+      local truncated = love.filesystem.newFileData(bytes:sub(1, size), 'truncated.exr')
+      test:assertFalse(pcall(love.image.newImageData, truncated), 'reject truncated EXR')
+    end
+  end
+
 end
 
 
