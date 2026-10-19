@@ -52,18 +52,13 @@
     "sha256": "279327339903b544c28a92aeada7d0dcfd0397b59c2f368cc698ac56f515906e"
   },
   "modplug": {
-    "version": "0.8.8.5",
-    "url": "https://downloads.sourceforge.net/project/modplug-xmms/libmodplug/0.8.8.5/libmodplug-0.8.8.5.tar.gz",
-    "sha256": "77462d12ee99476c8645cb5511363e3906b88b33a6b54362b4dbc0f39aa2daad"
-  },
-  "modplug-windows": {
-    "version": "0.8.8.4",
-    "url": "https://downloads.sourceforge.net/project/modplug-xmms/libmodplug/0.8.8.4/libmodplug-0.8.8.4.tar.gz",
-    "sha256": "5c5ee13dddbed144be26276e5f102da17ff5b1c992f3100389983082da2264f7",
+    "version": "0.8.9.0",
+    "url": "https://downloads.sourceforge.net/project/modplug-xmms/libmodplug/0.8.9.0/libmodplug-0.8.9.0.tar.gz",
+    "sha256": "457ca5a6c179656d66c01505c0d95fafaead4329b9dbaa0f997d00a3508ad9de",
     "patches": [
       {
-        "file": "patches/modplug-windows.patch",
-        "sha256": "9a2db2f4a4d2ed156dd51745bc9b6bdc7c588842418a2a515be98feb52fbc79b"
+        "file": "patches/modplug-ctype.patch",
+        "sha256": "3b20f4a286bbe2fa735c30f316797dae7548eafe1bb17200add26334030adead"
       }
     ]
   },

@@ -1,0 +1,11 @@
+--- a/src/load_abc.cpp
++++ b/src/load_abc.cpp
+@@ -267,7 +267,7 @@
+ }
+ #endif
+ 
+-static int abc_isvalidchar(char c) {
++static int abc_isvalidchar(unsigned char c) {
+ 	return(isalpha(c) || isdigit(c) || isspace(c) || c == '%' || c == ':');
+ }
+ #if 0

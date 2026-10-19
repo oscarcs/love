@@ -37,6 +37,21 @@ love.test.sound.Decoder = function(test)
   test:assertRange(clone:getDuration(), 0.06, 0.07, 'check cloned duration')
   test:assertEquals(44100, clone:getSampleRate(), 'check cloned sample rate')
 
+  -- A minimal ProTracker module with one pattern and one eight-byte sample.
+  local sample = string.rep('\0', 22) .. '\0\4\0\64\0\0\0\1'
+  local module = string.rep('\0', 20) .. sample .. string.rep('\0', 30 * 30)
+    .. '\1\0' .. string.rep('\0', 128) .. 'M.K.'
+    .. string.char(1, 172, 16, 0) .. string.rep('\0', 1020)
+    .. string.char(0, 32, 64, 32, 0, 224, 192, 224)
+  local modfile = love.filesystem.newFileData(module, 'silence.mod')
+  local moddecoder = love.sound.newDecoder(modfile, 1024)
+  test:assertEquals(2, moddecoder:getChannelCount(), 'module channels')
+  test:assertTrue(moddecoder:getDuration() > 0, 'module duration')
+  test:assertTrue(moddecoder:decode():getSize() > 0, 'module decoding')
+  moddecoder:seek(0)
+  test:assertTrue(moddecoder:decode():getSize() > 0, 'module rewind')
+  test:assertTrue(moddecoder:clone():decode():getSize() > 0, 'module clone')
+
 end
 
 

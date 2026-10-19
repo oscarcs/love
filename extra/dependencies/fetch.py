@@ -17,15 +17,13 @@ ROOT = Path(__file__).resolve().parents[2]
 LOCK = Path(__file__).with_name('sources.json')
 LIBRARIES = ('sdl', 'luajit', 'openal', 'zlib', 'freetype', 'harfbuzz',
              'ogg', 'vorbis', 'theora', 'modplug', 'bzip2', 'lua')
-WINDOWS_VERSIONS = {'modplug'}
 
 
 def entries(profile):
     lock = json.loads(LOCK.read_text())
     selected = {}
     for name in LIBRARIES:
-        use_windows = profile in ('windows', 'android') and name in WINDOWS_VERSIONS
-        key = name + '-windows' if use_windows else name
+        key = name
         if profile == 'android' and name == 'openal':
             key = 'openal-android'
         selected[name] = lock[key]
