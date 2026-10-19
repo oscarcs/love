@@ -110,8 +110,8 @@ jobs:
           ALSOFT_CONF: ${{ github.workspace }}/testing/resources/alsoft.conf
           LD_LIBRARY_PATH: ${{ env.SDL_PREFIX }}/lib
           LIBGL_ALWAYS_SOFTWARE: '1'
-          # Keep llvmpipe's SIMD width consistent across hosted CPUs.
-          LP_NATIVE_VECTOR_WIDTH: '128'
+          # Avoid Mesa 25.2.8's vec3 uniform-array bug in llvmpipe's rectangle fast path.
+          LP_PERF: no_rast_linear
           LOVE_GRAPHICS_DEBUG: '1'
           SDL_VIDEODRIVER: x11
         run: |
