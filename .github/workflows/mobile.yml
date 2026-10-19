@@ -81,7 +81,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes ninja-build cmake
+          sudo apt-get install --no-install-recommends --yes ninja-build cmake gcc-multilib
       - name: Build APK and release bundles
         working-directory: source/platform/android
         run: |

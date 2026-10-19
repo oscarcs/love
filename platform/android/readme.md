@@ -9,3 +9,8 @@ from the repository root to prepare SDL Java sources as well as native dependenc
 Then build from this directory with `./gradlew assembleNormalRecordRelease`.
 Set `sdk.dir` in an untracked `local.properties`, or set `ANDROID_HOME`.
 The native build uses the fork root and its pinned dependency sources.
+
+The full ABI set includes 32-bit ARM and requires a Linux x64 host with
+`gcc-multilib` to build LuaJIT's matching host tools. To build only the 64-bit
+ABIs (including on Apple Silicon), pass
+`-Papp.abis=arm64-v8a,x86_64` to Gradle.

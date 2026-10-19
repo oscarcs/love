@@ -47,7 +47,8 @@ def main():
                        'x86_64': 'x86_64-linux-android', 'x86': 'i686-linux-android'}
             toolchain = Path(a.compiler).parent
             cc = str(toolchain / (triples[a.architecture] + a.android_api + '-clang'))
-            command += ['HOST_CC=cc', 'CROSS=' + str(toolchain / 'llvm-'), 'STATIC_CC=' + cc,
+            host_cc = 'cc -m32' if a.architecture in ('armeabi-v7a', 'x86') else 'cc'
+            command += ['HOST_CC=' + host_cc, 'CROSS=' + str(toolchain / 'llvm-'), 'STATIC_CC=' + cc,
                         'DYNAMIC_CC=' + cc + ' -fPIC', 'TARGET_LD=' + cc, 'TARGET_SYS=Linux',
                         'TARGET_AR=' + str(toolchain / 'llvm-ar') + ' rcus',
                         'TARGET_STRIP=' + str(toolchain / 'llvm-strip'),
