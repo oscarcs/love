@@ -12,7 +12,7 @@ MACHINES = {'armeabi-v7a': 40, 'arm64-v8a': 183, 'x86_64': 62}
 REQUIRED = {'libc++_shared.so', 'libSDL3.so', 'liboboe.so', 'libopenal.so',
             'libluajit.so', 'libliblove.so', 'liblove.so'}
 SYSTEM = {'libandroid.so', 'libc.so', 'libdl.so', 'liblog.so', 'libm.so',
-          'libOpenSLES.so', 'libz.so', 'libEGL.so', 'libGLESv2.so', 'libGLESv3.so',
+          'libOpenSLES.so', 'libz.so', 'libEGL.so', 'libGLESv1_CM.so', 'libGLESv2.so', 'libGLESv3.so',
           'libvulkan.so', 'libaaudio.so', 'libnativewindow.so', 'libmediandk.so',
           'libcamera2ndk.so', 'libOpenMAXAL.so', 'libjnigraphics.so', 'libbinder_ndk.so'}
 JNI = 'Java_org_love2d_android_GameActivity_nativeSetDefaultStreamValues'
