@@ -1,0 +1,45 @@
+--- a/src/load_abc.cpp
++++ b/src/load_abc.cpp
+@@ -278,7 +278,8 @@
+ #endif
+ 
+ static int abc_isvalidchar(char c) {
+-	return(isalpha(c) || isdigit(c) || isspace(c) || c == '%' || c == ':');
++	unsigned char uc = (unsigned char) c;
++	return(isalpha(uc) || isdigit(uc) || isspace(uc) || c == '%' || c == ':');
+ }
+ 
+ static const char *abc_skipspace(const char *p)
+@@ -2244,11 +2245,11 @@
+ 	if( m->n ) {
+ 		k = m->n - m->name;
+ 		for( i=0; i<14; i++ ) {
+-			char t[strlen(m->name) + 1];
++			char *t = (char *)malloc(strlen(m->name) + 1);
+ 			strcpy(t, m->name);
+ 			t[k] = "CDEFGABcdefgab"[i];
+ 			l = strlen(m->subst);
+-			char s[2 * l + 1];
++			char *s = (char *)malloc(2 * l + 1);
+ 			char *p = s;
+ 			for( j=0; j<l; j++ ) {
+ 				a = m->subst[j];
+@@ -2265,6 +2266,8 @@
+ 			}
+ 			*p = '\0';
+ 			abc_substitute(h, t, s);
++			free(s);
++			free(t);
+ 		}
+ 	}
+ 	else
+--- a/src/load_pat.cpp
++++ b/src/load_pat.cpp
+@@ -39,6 +39,7 @@
+ #endif
+ #ifndef PATH_MAX
+ #define PATH_MAX 256
++static bool isblank(char c) { return c == ' ' || c == '\t'; }
+ #endif
+ 
+ #ifdef NEWMIKMOD

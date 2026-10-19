@@ -8,7 +8,7 @@ Libraries are downloaded directly from their original upstream projects.
 `BUNDLED` verifies every source archive against `sources.json` and builds the
 libraries alongside the engine. Choose explicitly with `LOVE_DEPENDENCIES`, or
 use the `system` and `bundled` CMake presets. CMake 3.21+, a C/C++ compiler,
-Python 3.9+, and platform SDK/build tools are required. Unix LuaJIT builds also
+Python 3.9+, Git, and platform SDK/build tools are required. Unix LuaJIT builds also
 require make. Downloads and extracted sources live in `.deps/<profile>`; build
 outputs live under `build/`. Neither is committed.
 
@@ -33,6 +33,12 @@ derive from the libraries' source lists and Megasource at
 Theora encoding is not used by the engine. LuaJIT uses its native build system
 through `build-luajit.py`, including Android cross compilation. Native Android
 LuaJIT binaries are built from source, not copied from Megasource.
+
+The `patches` directory preserves Megasource's ModPlug portability fixes and
+Vorbis architecture check for Windows/Android. Patch hashes are included in the
+source lock and package manifests. `android/opensl_latency.cpp` retains the JNI
+bridge used by the application to set Oboe's device stream defaults; it was
+imported from the same Megasource revision and is added to the OpenAL target.
 
 ## Updating
 

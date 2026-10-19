@@ -11,7 +11,7 @@ Each folder must contains:
     Caveat: If the library is meant to be loaded as require("my.library") then you MUST set LOCAL_MODULE_FILENAME to
             my.library (with dots).
   * If CMakeLists.txt is present:
-    The CMake script is loaded directly. 
+    The CMake script is loaded directly.
     For Lua includes and libraries, link with "luajit" target.
     Caveat: If the library is meant to be loaded as require("my.library") then you MUST set OUTPUT_NAME property to
             "my.library" (with dots) and PREFIX property to "" (empty string) on your CMake target using

@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import time
@@ -87,6 +88,11 @@ def fetch(name, entry, directory):
     download(entry['url'], entry['sha256'], archive)
     with tempfile.TemporaryDirectory(prefix=name + '-', dir=directory) as temp:
         source = extract(archive, Path(temp))
+        for patch in entry.get('patches', []):
+            patch_file = LOCK.parent / patch['file']
+            if digest(patch_file) != patch['sha256']:
+                raise ValueError('Patch checksum mismatch: ' + str(patch_file))
+            subprocess.run(['git', 'apply', '--no-index', str(patch_file.resolve())], cwd=source, check=True)
         if destination.exists():
             shutil.rmtree(destination)
         source.rename(destination)
