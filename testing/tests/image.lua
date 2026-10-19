@@ -101,6 +101,19 @@ love.test.image.ImageData = function(test)
   idata:setLinear(true)
   test:assertTrue(idata:isLinear(), 'check now linear')
 
+  for _, format in ipairs({'rgba8', 'rgba16'}) do
+    local source = love.image.newImageData(7, 5, format)
+    source:mapPixel(function(x, y) return x / 6, y / 4, 0.25, 0.75 end)
+    local encoded = source:encode('png')
+    local decoded = love.image.newImageData(encoded)
+    test:assertEquals(source:getString(), decoded:getString(), format .. ' PNG round trip')
+    test:assertEquals(format, decoded:getFormat(), format .. ' PNG format')
+    test:assertEquals(7, decoded:getWidth(), 'PNG width')
+    test:assertEquals(5, decoded:getHeight(), 'PNG height')
+    local truncated = love.filesystem.newFileData(encoded:getString():sub(1, 33), 'truncated.png')
+    test:assertFalse(pcall(love.image.newImageData, truncated), 'reject truncated PNG')
+  end
+
 end
 
 
