@@ -1,8 +1,8 @@
 {
   "sdl": {
-    "version": "3.4.10",
-    "url": "https://codeload.github.com/libsdl-org/SDL/tar.gz/8e37db5e797b6167f3a00d697d816a684bd259c7",
-    "sha256": "85aa3f7b01e91d9a0b2e8079b065c594e579c43d53d5671c8f68b20074cc896e"
+    "version": "3.4.18",
+    "url": "https://codeload.github.com/libsdl-org/SDL/tar.gz/829a65d769d935c4852f8159e964312c0957260a",
+    "sha256": "48e15cf1a6928453d77afa955d1fdfbbca9169e2bc3d76d111acb9b8bb076d66"
   },
   "luajit": {
     "version": "2.1.1792349434",
