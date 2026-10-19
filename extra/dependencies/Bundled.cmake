@@ -46,6 +46,7 @@ add_library(love_dep_bzip2 STATIC "${dep}/bzip2/blocksort.c" "${dep}/bzip2/huffm
   "${dep}/bzip2/crctable.c" "${dep}/bzip2/randtable.c" "${dep}/bzip2/compress.c"
   "${dep}/bzip2/decompress.c" "${dep}/bzip2/bzlib.c")
 target_include_directories(love_dep_bzip2 PUBLIC "${dep}/bzip2")
+add_library(BZip2::BZip2 ALIAS love_dep_bzip2)
 set(BZIP2_INCLUDE_DIR "${dep}/bzip2" CACHE PATH "" FORCE)
 set(BZIP2_LIBRARY_RELEASE love_dep_bzip2 CACHE STRING "" FORCE)
 set(BZIP2_LIBRARY_DEBUG love_dep_bzip2 CACHE STRING "" FORCE)
