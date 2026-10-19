@@ -58,6 +58,7 @@ set_target_properties(love_dep_luajit PROPERTIES IMPORTED_LOCATION "${LOVE_LUAJI
 if(WIN32)
   set_target_properties(love_dep_luajit PROPERTIES IMPORTED_IMPLIB "${luajit_implib}")
 endif()
+add_library(luajit ALIAS love_dep_luajit)
 add_dependencies(love_dep_luajit love_build_luajit)
 target_link_libraries(lovedep::Lua INTERFACE love_dep_luajit)
 set(LOVE_EXTRA_DEPENDECIES love_build_luajit)
