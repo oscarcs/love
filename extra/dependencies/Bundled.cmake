@@ -32,7 +32,10 @@ set(BUILD_TESTING OFF CACHE BOOL "Build dependency tests" FORCE)
 # upstream CMake build. These target lists derive from the original build files.
 include("${recipes}/Codecs.cmake")
 
-set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
+set(ZLIB_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory("${dep}/zlib" "${CMAKE_BINARY_DIR}/dependencies/zlib" EXCLUDE_FROM_ALL)
 target_link_libraries(lovedep::Zlib INTERFACE zlibstatic)
 set(ZLIB_LIBRARY zlibstatic)

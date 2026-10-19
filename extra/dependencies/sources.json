@@ -21,14 +21,9 @@
     "sha256": "c82a779d9144c383f23f9d7cc8125e96ec90b137be767a9cc9c47a32502b15fb"
   },
   "zlib": {
-    "version": "1.3",
-    "url": "https://codeload.github.com/madler/zlib/tar.gz/09155eaa2f9270dc4ed1fa13e2b4b2613e6e4851",
-    "sha256": "18337cdb32562003c39d9f7322b9a166ad4abfb2b909566428e11f96d2385586"
-  },
-  "zlib-windows": {
-    "version": "1.3.1",
-    "url": "https://codeload.github.com/madler/zlib/tar.gz/51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf",
-    "sha256": "d9e270d46252734aa49770fbc544125391617956266f220bd63216c834f3a522"
+    "version": "1.3.2",
+    "url": "https://codeload.github.com/madler/zlib/tar.gz/da607da739fa6047df13e66a2af6b8bec7c2a498",
+    "sha256": "b9258cf6254e7f7c37f1cd61dba943a1c5ea3cff5718c789834dac359094f5f7"
   },
   "freetype": {
     "version": "2.14.3",
