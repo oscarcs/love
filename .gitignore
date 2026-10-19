@@ -69,3 +69,11 @@ stamp-h1
 /testing/output/*.md
 /testing/output/actual/*.png
 /testing/output/difference/*.png
+
+# Local CMake builds and downloaded dependency sources
+/build/
+/.deps/
+/.ci/
+/prefix/
+CMakeUserPresets.json
+__pycache__/

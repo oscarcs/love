@@ -1,0 +1,92 @@
+{
+  "sdl": {
+    "version": "3.4.10",
+    "url": "https://codeload.github.com/libsdl-org/SDL/tar.gz/8e37db5e797b6167f3a00d697d816a684bd259c7",
+    "sha256": "85aa3f7b01e91d9a0b2e8079b065c594e579c43d53d5671c8f68b20074cc896e"
+  },
+  "luajit": {
+    "version": "2.1-dd3b243",
+    "url": "https://codeload.github.com/LuaJIT/LuaJIT/tar.gz/dd3b24369ddfaa83c78cd6fdd91d157c8968ec8d",
+    "sha256": "a6ac8457c474c6fb71aaa7660dd5bf8f6e0506496fc74786b2dae18e26a768cc"
+  },
+  "openal": {
+    "version": "1.24.3",
+    "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/dc7d7054a5b4f3bec1dc23a42fd616a0847af948",
+    "sha256": "dd733d74c33b106b90f83a0e0e9917b39aa401162ff8da23d7948615dcb92ef7"
+  },
+  "harfbuzz": {
+    "version": "10.1.0",
+    "url": "https://codeload.github.com/harfbuzz/harfbuzz/tar.gz/9ef44a2d67ac870c1f7f671f6dc98d08a2579865",
+    "sha256": "c82a779d9144c383f23f9d7cc8125e96ec90b137be767a9cc9c47a32502b15fb"
+  },
+  "zlib": {
+    "version": "1.3",
+    "url": "https://codeload.github.com/madler/zlib/tar.gz/09155eaa2f9270dc4ed1fa13e2b4b2613e6e4851",
+    "sha256": "18337cdb32562003c39d9f7322b9a166ad4abfb2b909566428e11f96d2385586"
+  },
+  "zlib-windows": {
+    "version": "1.3.1",
+    "url": "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
+    "sha256": "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23"
+  },
+  "freetype": {
+    "version": "2.13.3",
+    "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.gz",
+    "sha256": "5c3a8e78f7b24c20b25b54ee575d6daa40007a5f4eea2845861c3409b3021747"
+  },
+  "freetype-windows": {
+    "version": "2.13.2",
+    "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.gz",
+    "sha256": "1ac27e16c134a7f2ccea177faba19801131116fd682efc1f5737037c5db224b5"
+  },
+  "ogg": {
+    "version": "1.3.5",
+    "url": "https://downloads.xiph.org/releases/ogg/libogg-1.3.5.tar.gz",
+    "sha256": "0eb4b4b9420a0f51db142ba3f9c64b333f826532dc0f48c6410ae51f4799b664"
+  },
+  "ogg-windows": {
+    "version": "1.3.2",
+    "url": "https://downloads.xiph.org/releases/ogg/libogg-1.3.2.tar.gz",
+    "sha256": "e19ee34711d7af328cb26287f4137e70630e7261b17cbe3cd41011d73a654692"
+  },
+  "vorbis": {
+    "version": "1.3.7",
+    "url": "https://downloads.xiph.org/releases/vorbis/libvorbis-1.3.7.tar.gz",
+    "sha256": "0e982409a9c3fc82ee06e08205b1355e5c6aa4c36bca58146ef399621b0ce5ab"
+  },
+  "vorbis-windows": {
+    "version": "1.3.5",
+    "url": "https://downloads.xiph.org/releases/vorbis/libvorbis-1.3.5.tar.gz",
+    "sha256": "6efbcecdd3e5dfbf090341b485da9d176eb250d893e3eb378c428a2db38301ce"
+  },
+  "theora": {
+    "version": "1.2.0",
+    "url": "https://downloads.xiph.org/releases/theora/libtheora-1.2.0.tar.gz",
+    "sha256": "279327339903b544c28a92aeada7d0dcfd0397b59c2f368cc698ac56f515906e"
+  },
+  "theora-windows": {
+    "version": "1.1.1",
+    "url": "https://downloads.xiph.org/releases/theora/libtheora-1.1.1.tar.gz",
+    "sha256": "40952956c47811928d1e7922cda3bc1f427eb75680c3c37249c91e949054916b"
+  },
+  "modplug": {
+    "version": "0.8.8.5",
+    "url": "https://downloads.sourceforge.net/project/modplug-xmms/libmodplug/0.8.8.5/libmodplug-0.8.8.5.tar.gz",
+    "sha256": "77462d12ee99476c8645cb5511363e3906b88b33a6b54362b4dbc0f39aa2daad"
+  },
+  "modplug-windows": {
+    "version": "0.8.8.4",
+    "url": "https://downloads.sourceforge.net/project/modplug-xmms/libmodplug/0.8.8.4/libmodplug-0.8.8.4.tar.gz",
+    "sha256": "5c5ee13dddbed144be26276e5f102da17ff5b1c992f3100389983082da2264f7"
+  },
+  "bzip2": {
+    "version": "1.0.8",
+    "url": "https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz",
+    "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269"
+  },
+  "lua": {
+    "version": "5.1.5",
+    "url": "https://www.lua.org/ftp/lua-5.1.5.tar.gz",
+    "sha256": "2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333"
+  }
+}
