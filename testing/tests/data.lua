@@ -166,6 +166,26 @@ love.test.data.decompress = function(test)
   test:assertEquals(love.data.newByteData('helloworld'):getString(), love.data.decompress('data', 'gzip', str16):getString(), 'check data glib decompress')
   test:assertEquals(love.data.newByteData('helloworld'):getString(), love.data.decompress('data', 'gzip', str17):getString(), 'check data glib decompress')
   test:assertEquals(love.data.newByteData('helloworld'):getString(), love.data.decompress('data', 'gzip', str18):getString(), 'check data glib decompress')
+  -- Both string and CompressedData inputs must reject malformed LZ4 blocks.
+  local encoded = love.data.compress('string', 'lz4', 'helloworld')
+  for size = 0, #encoded - 1 do
+    local ok = pcall(love.data.decompress, 'string', 'lz4', encoded:sub(1, size))
+    test:assertFalse(ok, 'reject truncated LZ4 block ' .. size)
+  end
+  local oversized = love.data.pack('string', '<I4', 2147483648) .. '\0'
+  test:assertFalse(pcall(love.data.decompress, 'string', 'lz4', oversized), 'reject oversized LZ4 header')
+  local mismatch = love.data.pack('string', '<I4', 11) .. encoded:sub(5)
+  test:assertFalse(pcall(love.data.decompress, 'string', 'lz4', mismatch), 'reject inconsistent LZ4 size')
+  test:assertEquals('', love.data.decompress('string', love.data.compress('data', 'lz4', '')), 'empty LZ4 data')
+
+  local hasffi, ffi = pcall(require, 'ffi')
+  if hasffi then
+    local invalid = love.data.compress('data', 'lz4', 'helloworld')
+    local bytes = ffi.cast('uint8_t*', invalid:getFFIPointer())
+    bytes[4] = 240 -- Declares more literal bytes than the buffer contains.
+    test:assertFalse(pcall(love.data.decompress, 'string', invalid), 'bound CompressedData LZ4 input')
+  end
+
 end
 
 

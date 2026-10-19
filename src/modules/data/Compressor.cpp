@@ -28,6 +28,8 @@
 #include "libraries/lz4/lz4hc.h"
 
 #include <zlib.h>
+#include <climits>
+#include <cstring>
 
 namespace love
 {
@@ -112,13 +114,14 @@ public:
 		if (dataSize < headersize)
 			throw love::Exception("Invalid LZ4-compressed data size.");
 
-		// Extract the original uncompressed size (stored in our custom header.)
+		// The format stores the original size in a little-endian header.
+		uint32 rawsize;
+		memcpy(&rawsize, data, sizeof(rawsize));
 #ifdef LOVE_BIG_ENDIAN
-		// Convert from stored little-endian to big-endian.
-		uint32 rawsize = swapuint32(*(uint32 *) data);
-#else
-		uint32 rawsize = *(uint32 *) data;
+		rawsize = swapuint32(rawsize);
 #endif
+		if (rawsize > INT_MAX || dataSize - headersize > INT_MAX)
+			throw love::Exception("Invalid LZ4-compressed data size.");
 
 		try
 		{
@@ -129,32 +132,15 @@ public:
 			throw love::Exception("Out of memory.");
 		}
 
-		// If the uncompressed size is passed in as an argument (non-zero) and
-		// it matches the header's stored size, then we assume it's 100% accurate
-		// and we use a more efficient decompression function.
-		if (decompressedSize > 0 && decompressedSize == (size_t) rawsize)
+		// Always bound both buffers, including when the original size is known.
+		int result = LZ4_decompress_safe(data + headersize, rawbytes,
+		                                 (int) (dataSize - headersize), (int) rawsize);
+		if (result < 0 || (uint32) result != rawsize)
 		{
-			// We don't use the header here, but we need to account for its size.
-			if (LZ4_decompress_fast(data + headersize, rawbytes, (int) decompressedSize) < 0)
-			{
-				delete[] rawbytes;
-				throw love::Exception("Could not decompress LZ4-compressed data.");
-			}
+			delete[] rawbytes;
+			throw love::Exception("Could not decompress LZ4-compressed data.");
 		}
-		else
-		{
-			// Account for our custom header's size in the decompress arguments.
-			int result = LZ4_decompress_safe(data + headersize, rawbytes,
-			                                 (int) (dataSize - headersize), rawsize);
-
-			if (result < 0)
-			{
-				delete[] rawbytes;
-				throw love::Exception("Could not decompress LZ4-compressed data.");
-			}
-
-			decompressedSize = (size_t) result;
-		}
+		decompressedSize = (size_t) result;
 
 		return rawbytes;
 	}

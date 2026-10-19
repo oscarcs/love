@@ -63,7 +63,7 @@ This distribution contains code from the following projects (full license text b
  - LZ4
 	Website: https://lz4.github.io/lz4/
 	License: 2-Clause BSD
-	Copyright (C) 2011-2015, Yann Collet.
+	Copyright (C) 2011-2023, Yann Collet.
 		You can contact the author at :
 		- LZ4 source repository : https://github.com/Cyan4973/lz4
 		- LZ4 public forum : https://groups.google.com/forum/#!forum/lz4c

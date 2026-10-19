@@ -1629,7 +1629,6 @@ add_library(love_3p_lz4
 	src/libraries/lz4/lz4.h
 	src/libraries/lz4/lz4hc.c
 	src/libraries/lz4/lz4hc.h
-	src/libraries/lz4/lz4opt.h
 )
 
 #
