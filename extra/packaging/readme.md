@@ -1,40 +1,58 @@
 # Packaging
 
-Desktop packages are manual-only. In GitHub Actions, run **Desktop packages** on the desired branch or tag and select any combination of Linux x64, Linux ARM64, Windows x64, and macOS ARM64. Only selected targets run. Successful jobs upload packages, debug symbols, and `manifest.json` for 14 days; they do not create or publish a release.
+## GitHub Actions
 
-The Linux helper workflow is called by the desktop workflow. **Mobile builds** is a separate manual workflow for Android Debug/Release or an iOS simulator compilation check. The iOS job does not produce a device distribution package.
+Run [Desktop packages](../../.github/workflows/main.yml) manually on the desired
+branch or tag, selecting the targets to build:
 
-## Build inputs
+| Target | Package | Debug symbols |
+| --- | --- | --- |
+| Linux x64 / ARM64 | AppImage | Debug archive |
+| Windows x64 | Portable ZIP | PDBs |
+| macOS ARM64 | App ZIP | dSYMs |
 
-Dependency sources and build recipes live in `extra/dependencies`; see its
-[maintenance guide](../dependencies/readme.md). Desktop and mobile workflows
-check out only this fork. The Android application project is in `platform/android`.
-Apple builds use CMake-generated application targets instead of prebuilt frameworks.
+Download the results from the workflow run's artifacts. Packages, symbols, and
+`manifest.json` are kept for 14 days. Each manifest records the engine commit,
+dependency source versions and hashes, and artifact SHA-256 hashes. The workflow
+does not publish GitHub releases.
 
-The Linux `appimage.py` script assembles the CMake install tree, adds its runtime
-libraries and LuaJIT tooling, separates debug symbols, checks for missing/build-tree
-library dependencies, and invokes AppImageTool 1.9.1 with a verified checksum.
-Windows uses the root CPack ZIP configuration. `macos.py` installs and relocates the
-app's libraries, creates dSYMs, strips symbols, signs the app ad hoc, and creates ZIPs.
+Run [Mobile builds](../../.github/workflows/mobile.yml) separately. Choose Android
+Debug or Release for APKs; Release also produces app bundles. Android artifacts
+include unstripped native libraries. The iOS option checks simulator compilation
+and uploads build metadata.
 
-Windows software tests use the fixed Mesa 26.2.4 archive and checksum in the
-workflow. Those DLLs are copied only to the extracted test package. GitHub actions
-remain pinned to commit SHAs. Android's Gradle wrapper has a fixed distribution
-version and SHA-256.
+## Package locally
 
-Each package manifest includes the engine commit, selected dependency source
-URLs/versions/hashes, and final artifact hashes. Host tools and packages remain
-external inputs; the builds are not claimed to be bit reproducible.
+First follow the [build instructions](../../readme.md). Run these commands from
+the repository root.
 
-## Validation
+For a Linux bundled `RelWithDebInfo` build, install `patchelf` and binutils, then:
 
-All desktop jobs run the existing API test suite from the packaged artifact: Linux runs the AppImage; Windows and macOS extract the ZIP and run that copy. A nonzero test exit fails the job. Linux uses Xvfb and Openbox. Software OpenGL tests use the llvmpipe linear-rasterizer workaround in the test process only; it is not included in distributed packages.
+```sh
+python3 extra/packaging/appimage.py --build build/bundled --output build/dist
+```
 
-Linux currently tests OpenGL; Windows tests OpenGL and OpenGL ES; macOS tests OpenGL and Metal. Other graphics paths are not validated by these packaging jobs. Failures upload test output and logs for seven days. The smooth-line image test uses its existing Linux 1/255 color tolerance on Windows GLES llvmpipe in CI as well; see `testing/readme.md` for the scoped runner exceptions.
+The script downloads a checksummed AppImageTool and bundles runtime libraries,
+LuaJIT tooling, license notices, and separate debug symbols.
 
-The package workflows retain Linux debug archives, Windows PDBs, and macOS dSYMs. Android retains unstripped native shared libraries rather than the entire native build directory. Windows source indexing, NSIS installers, and Debian packaging have been removed. Ordinary CMake installation rules remain available.
+For Windows:
 
-Android APKs and AABs are inspected for the expected ABI set, ELF architectures,
-required native libraries, unresolved shared-library dependencies, and the audio
-stream initialization JNI export. These are package integrity checks; the mobile
-jobs do not run the API suite on an emulator or device.
+```powershell
+cpack --config build/windows/CPackConfig.cmake -C Release -G ZIP
+```
+
+For macOS, use the [Apple packaging instructions](../../platform/apple/readme.md).
+For Android, use the [Gradle build instructions](../../platform/android/readme.md).
+
+## Package checks
+
+Desktop jobs run the API suite using the packaged executable. Linux tests OpenGL,
+Windows tests OpenGL and OpenGL ES, and macOS tests OpenGL and Metal. Failed jobs
+upload reports and logs for seven days.
+
+Android checks package ABIs, ELF architectures, required native libraries,
+shared-library dependencies, and the audio initialization JNI export. Mobile
+jobs do not run the API suite on a device or emulator.
+
+See the [test guide](../../testing/readme.md) for runner settings and the
+[dependency guide](../dependencies/readme.md) for updating package inputs.

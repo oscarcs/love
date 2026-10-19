@@ -1,16 +1,34 @@
 # Android application
 
-The Android application shell was imported from love2d/love-android at
-`4c65fff4f8b38693aca5d91bc06f254f86a97adf` and adapted for this fork.
-Original copyright notices and `license.txt` are retained.
+## Build
 
-First run `python3 extra/dependencies/fetch.py --profile android --directory .deps/android`
-from the repository root to prepare SDL Java sources as well as native dependencies.
-Then build from this directory with `./gradlew assembleNormalRecordRelease`.
-Set `sdk.dir` in an untracked `local.properties`, or set `ANDROID_HOME`.
-The native build uses the fork root and its pinned dependency sources.
+Install Java 17 and the Android SDK. Set `ANDROID_HOME`, or set `sdk.dir` in
+`platform/android/local.properties`. From the repository root:
 
-The full ABI set includes 32-bit ARM and requires a Linux x64 host with
-`gcc-multilib` to build LuaJIT's matching host tools. To build only the 64-bit
-ABIs (including on Apple Silicon), pass
-`-Papp.abis=arm64-v8a,x86_64` to Gradle.
+```sh
+python3 extra/dependencies/fetch.py --profile android --directory .deps/android
+cd platform/android
+./gradlew assembleNormalRecordRelease
+```
+
+Use `assembleNormalRecordDebug` for a debug APK. Outputs are under
+`app/build/outputs/`. Release APKs require signing before installation.
+
+The default ABIs are `armeabi-v7a`, `arm64-v8a`, and `x86_64`. Building all three
+requires a Linux x64 host with `gcc-multilib` for LuaJIT's host tools. On Apple
+Silicon, or to build only the 64-bit ABIs:
+
+```sh
+./gradlew assembleNormalRecordRelease -Papp.abis=arm64-v8a,x86_64
+```
+
+## Configure the app
+
+Set the display name, application ID, orientation, and version in
+[gradle.properties](gradle.properties).
+
+For automated builds and release bundles, see the
+[packaging guide](../../extra/packaging/readme.md).
+
+Android application code is based on [LÖVE for Android](https://github.com/love2d/love-android);
+see [license.txt](license.txt) for licensing.

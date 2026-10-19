@@ -1,39 +1,21 @@
-This is a fork of the 2D game framework, LÖVE.
+# LÖVE
 
-Test Suite
-----------
+A fork of the LÖVE 2D game framework.
 
-The test suite in `testing/` covers all the LÖVE APIs, and tests them the same way developers use them.
+## Run a game
 
-You can run the suite locally like you would run a normal LÖVE project, e.g.:  
-`love testing`
+Pass a game directory containing `main.lua`, or a `.love` archive, to the executable:
 
-The suite exits with status `0` when no tests fail, or `1` if any test fails. Skipped tests do not count as failures.
+```sh
+love /path/to/game
+love /path/to/game.love
+```
 
-See the [test suite README](testing/readme.md) for more info.
+## Build
 
-[CI](.github/workflows/ci.yml) builds and tests Linux x64 on pull requests and pushes to `main`.
-[Desktop packages](.github/workflows/main.yml) run manually through GitHub Actions, with independent selections for:
-
-- Linux x64 and ARM64 AppImages
-- Windows x64 ZIP (executables, DLLs, and LuaJIT tooling)
-- macOS ARM64 app ZIP
-
-Packages include debug symbols and a manifest with source/dependency revisions and SHA-256 hashes.
-The packaged executables are tested before upload; artifacts are retained for 14 days and are not published as releases.
-Linux x64 packages build on Ubuntu 22.04; ARM64 packages build on Ubuntu 24.04.
-Debian packages and Windows installers are not built.
-
-[Mobile builds](.github/workflows/mobile.yml) run separately on demand: Android Debug/Release APKs and release bundles, or an iOS simulator build check.
-See [packaging maintenance](extra/packaging/readme.md) for dependency pins and validation details.
-
-Compilation
------------
-
-All platforms build from this checkout. Dependency sources, versions, hashes, and
-recipes are owned here; no sibling LÖVE build repository is needed.
-Use CMake 3.21+, Python 3.9+, Git, and the platform's compiler/SDK. Bundled Unix builds
-also need `make` for LuaJIT.
+Run the commands below from the repository root. Bundled builds require CMake
+3.21+, Python 3.9+, Git, and the platform's C/C++ compiler and SDK. Unix builds
+also require `make` for LuaJIT. Dependencies download during configuration.
 
 ### Windows
 
@@ -42,7 +24,6 @@ With Visual Studio's C++ build tools installed:
 ```powershell
 cmake -S . -B build/windows -A x64 -DLOVE_DEPENDENCIES=BUNDLED
 cmake --build build/windows --config Release --parallel 2
-cpack --config build/windows/CPackConfig.cmake -C Release -G ZIP
 ```
 
 ### Linux
@@ -55,7 +36,7 @@ Then build the engine and its pinned libraries:
 ```sh
 cmake --preset bundled
 cmake --build --preset bundled
-./build/bundled/love testing --all
+./build/bundled/love /path/to/game
 ```
 
 To use already-installed SDL3, LuaJIT, FreeType, HarfBuzz, OpenAL, ModPlug, Ogg,
@@ -71,12 +52,12 @@ cmake -S . -B build/macos -DLOVE_DEPENDENCIES=BUNDLED \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 cmake --build build/macos --target love --parallel 2
-python3 extra/packaging/macos.py --build build/macos --output build/dist
+./build/macos/love.app/Contents/MacOS/love /path/to/game
 ```
 
-The packaging command bundles runtime libraries, retains dSYMs, and signs the
-app ad hoc. For an editable Xcode project, configure with `-G Xcode` in a separate
-build directory, then build the `love` target with `--config RelWithDebInfo`.
+For an editable Xcode project, configure with `-G Xcode` in a separate build
+directory, then build with `--config RelWithDebInfo`. See the
+[Apple application guide](platform/apple/readme.md) for signing and embedding games.
 
 ### iOS
 
@@ -90,8 +71,8 @@ cmake -S . -B build/ios -G Xcode -DLOVE_DEPENDENCIES=BUNDLED \
 cmake --build build/ios --target love --config Release -- CODE_SIGNING_ALLOWED=NO
 ```
 
-The minimum supported iOS version is 18. Simulator builds are unsigned compilation checks. Device builds
-require the device SDK and your signing configuration.
+The minimum supported iOS version is 18. This builds an unsigned ARM64 simulator
+app. Device builds require the device SDK and your signing configuration.
 
 ### Android
 
@@ -104,18 +85,24 @@ cd platform/android
 ./gradlew assembleNormalRecordRelease
 ```
 
-See [dependency maintenance](extra/dependencies/readme.md) for source pins,
-platform differences, and updating instructions.
+## Test
 
-Dependencies
-------------
+Run the API suite with the executable you built:
 
-- SDL3
-- OpenGL 3.3+ / OpenGL ES 3.0+ / Vulkan / Metal
-- OpenAL
-- LuaJIT / Lua 5.1
-- FreeType
-- harfbuzz
-- ModPlug
-- Vorbisfile
-- Theora
+```sh
+./build/bundled/love testing --all
+```
+
+The exit status is `0` when no tests fail and `1` when any test fails. Skipped
+tests do not count as failures. See the [test guide](testing/readme.md) for
+selecting tests and reading reports.
+
+## Packages and CI
+
+[CI](.github/workflows/ci.yml) builds and tests Linux x64 on pull requests and
+pushes to `main`. Desktop and mobile packages are built manually through GitHub
+Actions. See the [packaging guide](extra/packaging/readme.md) for targets,
+artifacts, and local packaging commands.
+
+For dependency configuration and updates, see the
+[dependency guide](extra/dependencies/readme.md).

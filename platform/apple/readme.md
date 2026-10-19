@@ -1,19 +1,25 @@
 # Apple applications
 
-The supported minimums are macOS 15 and iOS 18.
+Requires macOS 15+ or iOS 18+. See the [build instructions](../../readme.md)
+for CMake commands. Add `-G Xcode` to generate an editable Xcode project in a
+separate build directory.
 
-The root CMake build generates macOS and iOS application targets and can generate
-an editable Xcode project with `-G Xcode`. See the root README for exact commands.
-The former hand-maintained Xcode projects and external framework copies have
-been replaced by the same source-built dependency targets used on other platforms.
+## macOS packaging
 
-The plists, icons, launch screen, and entitlements here retain the application
-integration from the original Xcode projects. Both application types retain the
-`.love` document association. macOS packages are signed ad hoc for local testing;
-distribution signing and notarization remain separate release tasks.
+After building with `RelWithDebInfo`, run from the repository root:
 
-For an iOS device build, use `CMAKE_OSX_SYSROOT=iphoneos`, an architecture supported
-by the device SDK, and your development team/signing configuration. The manual
-workflow checks only the simulator target. Place an embedded game in the app's
-Resources as `game.love` (or a `game` directory); `src/common/ios.mm` retains the
-existing game-selection and Documents-folder behavior.
+```sh
+python3 extra/packaging/macos.py --build build/macos --output build/dist
+```
+
+This bundles runtime libraries, creates dSYMs, and signs the app ad hoc for local
+use. Distribution requires your own signing and notarization.
+
+## iOS device builds
+
+Configure with `CMAKE_OSX_SYSROOT=iphoneos`, a device architecture, and your
+Xcode development team and signing settings. The manual GitHub Actions workflow
+checks simulator compilation only.
+
+To embed a game, add a `.love` archive to the application bundle's resources.
+Without an embedded archive, the app presents games from its Documents directory.
