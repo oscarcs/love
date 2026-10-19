@@ -11,7 +11,7 @@ This distribution contains code from the following projects (full license text b
  - ENet
 	Website: http://enet.bespin.org/index.html
 	License: MIT/Expat
-	Copyright (c) 2002-2016 Lee Salzman
+	Copyright (c) 2002-2024 Lee Salzman
 
  - FreeType
 	Website: https://freetype.org/
