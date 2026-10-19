@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LOCK = Path(__file__).with_name('sources.json')
 LIBRARIES = ('sdl', 'luajit', 'openal', 'zlib', 'freetype', 'harfbuzz',
              'ogg', 'vorbis', 'theora', 'modplug', 'bzip2', 'lua')
-WINDOWS_VERSIONS = {'luajit', 'modplug'}
+WINDOWS_VERSIONS = {'modplug'}
 
 
 def entries(profile):

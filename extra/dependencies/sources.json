@@ -71,12 +71,6 @@
     "url": "https://www.lua.org/ftp/lua-5.1.5.tar.gz",
     "sha256": "2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333"
   },
-  "luajit-windows": {
-    "version": "2.1.1784580905",
-    "url": "https://codeload.github.com/LuaJIT/LuaJIT/tar.gz/2460b3ff93a1c955de3d62cfc825de7d68dc272e",
-    "sha256": "5c52d06876d86aa199f9b8cdc65f6f9ac086fdfa8a4489ebf8dc4516e194550b",
-    "release_timestamp": 1784580905
-  },
   "openal-android": {
     "version": "1.24.3",
     "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/dc7d7054a5b4f3bec1dc23a42fd616a0847af948",
