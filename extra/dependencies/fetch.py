@@ -108,6 +108,8 @@ def fetch(name, entry, directory):
 
 def collect_notices(directory, sources):
     notices = directory / 'package-assets/licenses'
+    if notices.exists():
+        shutil.rmtree(notices)
     notices.mkdir(parents=True, exist_ok=True)
     for name in sources:
         source = directory / name
@@ -118,6 +120,12 @@ def collect_notices(directory, sources):
                     target = notices / name / notice.relative_to(source)
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(notice, target)
+    vendors = ROOT / 'src/libraries'
+    for notice in vendors.rglob('*'):
+        if notice.is_file() and notice.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'COPYRIGHT')):
+            target = notices / 'vendored' / notice.relative_to(vendors)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(notice, target)
     (notices / 'sources.json').write_text(json.dumps(sources, indent=2) + '\n')
 
 

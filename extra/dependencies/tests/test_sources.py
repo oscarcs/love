@@ -36,6 +36,18 @@ class SourcesTest(unittest.TestCase):
                 for patch in entry.get('patches', []):
                     self.assertEqual(fetch.digest(fetch.LOCK.parent / patch['file']), patch['sha256'])
 
+    def test_package_notices_include_vendored_licenses(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stale = root / 'package-assets/licenses/old-version.txt'
+            stale.parent.mkdir(parents=True)
+            stale.write_text('stale notice')
+            fetch.collect_notices(root, {})
+            self.assertFalse(stale.exists())
+            for name in ('lz4/LICENSE', 'tinyexr/LICENSE', 'xxHash/LICENSE', 'enet/libenet/LICENSE'):
+                self.assertEqual((root / 'package-assets/licenses/vendored' / name).read_bytes(),
+                                 (fetch.ROOT / 'src/libraries' / name).read_bytes())
+
     def test_bad_download_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
