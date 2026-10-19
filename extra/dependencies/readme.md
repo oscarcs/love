@@ -17,7 +17,7 @@ outputs live under `build/`. Neither is committed.
 Linux keeps the previous AppImage library versions and locked Git revisions.
 Windows and Android keep the previous Megasource versions, including LuaJIT's
 actual `2460b3f` source revision (the old top-level version label was stale).
-HarfBuzz remains 10.1.0 and SDL remains 3.4.10 everywhere.
+All bundled profiles select HarfBuzz 10.1.0 and SDL 3.4.10.
 
 Apple previously used prebuilt binaries without a complete source lock. Apple
 now uses the Linux source pins, with zlib 1.3.1 to support current Apple SDKs.

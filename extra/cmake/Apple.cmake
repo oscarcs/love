@@ -26,7 +26,7 @@ else()
   set_target_properties(liblove PROPERTIES INSTALL_RPATH "@loader_path")
   set_target_properties(love PROPERTIES INSTALL_RPATH "@executable_path/../Frameworks")
   install(TARGETS liblove LIBRARY DESTINATION love.app/Contents/Frameworks)
-  install(PROGRAMS "$<TARGET_FILE:${LOVE_SDL_TARGET}>" "$<TARGET_FILE:OpenAL>" "${LOVE_LUAJIT_LIBRARY}"
+  install(PROGRAMS "$<TARGET_FILE:${LOVE_SDL_TARGET}>" "$<TARGET_FILE:OpenAL>" ${LOVE_LUA_RUNTIME}
     DESTINATION love.app/Contents/Frameworks)
   install(TARGETS love BUNDLE DESTINATION .)
   install(CODE "

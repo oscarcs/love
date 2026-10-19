@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import platform
 from pathlib import Path
 import shutil
 import subprocess
@@ -59,8 +60,14 @@ def main():
                 command += ['TARGET_SYS=iOS']
             else:
                 flags += ' -mmacosx-version-min=' + (a.deployment_target or '15.0')
-            command += ['CC=' + a.compiler, 'HOST_CC=' + a.compiler, 'TARGET_FLAGS=' + flags]
-            os.environ['MACOSX_DEPLOYMENT_TARGET'] = a.deployment_target or '15.0'
+            host_sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
+            host_cc = (a.compiler + ' -isysroot ' + host_sdk + ' -target '
+                       + platform.machine() + '-apple-macos15.0')
+            # Xcode exports the target SDKROOT, including into host-tool builds.
+            os.environ['SDKROOT'] = host_sdk
+            command += ['CC=' + a.compiler, 'HOST_CC=' + host_cc, 'TARGET_FLAGS=' + flags]
+            os.environ.pop('IPHONEOS_DEPLOYMENT_TARGET', None)
+            os.environ['MACOSX_DEPLOYMENT_TARGET'] = (a.deployment_target or '15.0') if a.profile == 'macos' else '15.0'
         subprocess.run(command, cwd=work, check=True)
         built = work / 'src' / ('libluajit.a' if a.profile == 'ios' else 'libluajit.so')
         output = {'linux': 'libluajit-5.1.so.2', 'macos': 'libluajit-5.1.2.dylib',

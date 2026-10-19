@@ -34,12 +34,19 @@ if(APPLE AND NOT IS_ABSOLUTE "${luajit_sdk}")
   endif()
   execute_process(COMMAND xcrun --sdk "${luajit_sdk}" --show-sdk-path OUTPUT_VARIABLE luajit_sdk OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
 endif()
+set(luajit_android_api "")
+if(ANDROID)
+  string(REGEX REPLACE "^android-" "" luajit_android_api "${ANDROID_PLATFORM}")
+  if(NOT luajit_android_api MATCHES "^[0-9]+$" OR luajit_android_api LESS 21)
+    message(FATAL_ERROR "Expected a valid Android API level in ANDROID_PLATFORM, got '${ANDROID_PLATFORM}'")
+  endif()
+endif()
 add_custom_command(OUTPUT "${LOVE_LUAJIT_LIBRARY}" "${luajit_dir}/luajit.h" ${luajit_implib}
   COMMAND "${Python3_EXECUTABLE}" "${recipes}/build-luajit.py" --source "${dep}/luajit"
     --directory "${luajit_dir}" --profile "${LOVE_DEPENDENCY_PROFILE}"
     --architecture "${luajit_arch}" --compiler "${CMAKE_C_COMPILER}"
     --sdk "${luajit_sdk}" --deployment-target "${CMAKE_OSX_DEPLOYMENT_TARGET}"
-    --android-api "${CMAKE_SYSTEM_VERSION}"
+    --android-api "${luajit_android_api}"
   DEPENDS "${recipes}/build-luajit.py" "${recipes}/sources.json" VERBATIM)
 add_custom_target(love_build_luajit DEPENDS "${LOVE_LUAJIT_LIBRARY}" "${luajit_dir}/luajit.h")
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")

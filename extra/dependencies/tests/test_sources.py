@@ -1,7 +1,5 @@
 """Exercise source verification and extraction without network access."""
 import hashlib
-import io
-import json
 from pathlib import Path
 import sys
 import tarfile

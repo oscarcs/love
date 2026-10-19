@@ -121,6 +121,7 @@ elseif(LOVE_DEPENDENCIES STREQUAL "SYSTEM")
 	add_definitions(-D HAS_SOCKLEN_T)
 
 	find_package(SDL3 3.1.3 REQUIRED CONFIG)
+	set(LOVE_SDL_TARGET SDL3::SDL3)
 	target_include_directories(lovedep::SDL INTERFACE ${SDL3_INCLUDE_DIRS})
 	target_link_libraries(lovedep::SDL INTERFACE ${SDL3_LIBRARIES})
 
