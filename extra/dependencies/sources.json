@@ -11,9 +11,15 @@
     "release_timestamp": 1792349434
   },
   "openal": {
-    "version": "1.24.3",
-    "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/dc7d7054a5b4f3bec1dc23a42fd616a0847af948",
-    "sha256": "dd733d74c33b106b90f83a0e0e9917b39aa401162ff8da23d7948615dcb92ef7"
+    "version": "1.25.2",
+    "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/b2c48f7718ef3fcf67921a8b6534c4914e328970",
+    "sha256": "6a3e5f80058ecf994a6885d7db5013629a259c659ab40a6f17db8963ceb211b2",
+    "patches": [
+      {
+        "file": "patches/openal-function-effects.patch",
+        "sha256": "0de391b08e3a78c4d1d7306f2111da55c824c150392f2c42f29d774d3af0fa62"
+      }
+    ]
   },
   "harfbuzz": {
     "version": "14.6.0",
@@ -72,13 +78,17 @@
     "sha256": "2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333"
   },
   "openal-android": {
-    "version": "1.24.3",
-    "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/dc7d7054a5b4f3bec1dc23a42fd616a0847af948",
-    "sha256": "dd733d74c33b106b90f83a0e0e9917b39aa401162ff8da23d7948615dcb92ef7",
+    "version": "1.25.2",
+    "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/b2c48f7718ef3fcf67921a8b6534c4914e328970",
+    "sha256": "6a3e5f80058ecf994a6885d7db5013629a259c659ab40a6f17db8963ceb211b2",
     "patches": [
       {
+        "file": "patches/openal-function-effects.patch",
+        "sha256": "0de391b08e3a78c4d1d7306f2111da55c824c150392f2c42f29d774d3af0fa62"
+      },
+      {
         "file": "patches/openal-android.patch",
-        "sha256": "2233c7bef8c17066a6c5ade710a428b03db2f2ab0064541ddfff2db22887023a"
+        "sha256": "568966143af3ed2bad88188025ac24d8ad317db5081f267bedf01d176ccad294"
       }
     ]
   }

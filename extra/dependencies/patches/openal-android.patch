@@ -4,7 +4,7 @@
  alSourceQueueBufferLayersSOFT;
  alUnmapBufferSOFT;
  
-+# love2d-mod
++# LÖVE Android audio stream defaults.
 +Java_org_love2d_android_GameActivity_nativeSetDefaultStreamValues;
 +
  local: *;
