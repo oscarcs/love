@@ -16,9 +16,9 @@
     "sha256": "dd733d74c33b106b90f83a0e0e9917b39aa401162ff8da23d7948615dcb92ef7"
   },
   "harfbuzz": {
-    "version": "10.1.0",
-    "url": "https://codeload.github.com/harfbuzz/harfbuzz/tar.gz/9ef44a2d67ac870c1f7f671f6dc98d08a2579865",
-    "sha256": "c82a779d9144c383f23f9d7cc8125e96ec90b137be767a9cc9c47a32502b15fb"
+    "version": "14.6.0",
+    "url": "https://codeload.github.com/harfbuzz/harfbuzz/tar.gz/c7a7457b7385f33178e8cf87615ca077a810bbe7",
+    "sha256": "10dcea60bd85ff219490d55525630650ac8c57044c4efdc878162f286451775b"
   },
   "zlib": {
     "version": "1.3.2",
