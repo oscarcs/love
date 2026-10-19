@@ -1,34 +1,4 @@
-LÖVE is an *awesome* framework you can use to make 2D games in Lua. It's free, open-source, and works on Windows, macOS, Linux, Android, and iOS.
-
-[![Build Status: Github CI](https://github.com/love2d/love/workflows/continuous-integration/badge.svg)](https://github.com/love2d/love/actions?query=workflow%3Acontinuous-integration)
-
-Documentation
--------------
-
-We use our [wiki][wiki] for documentation.
-If you need further help, feel free to ask on our [forums][forums], our [Discord server][discord], or our [subreddit][subreddit].
-
-Repository
-----------
-
-We use the 'main' branch for development of the next major release, and therefore it should not be considered stable.
-
-There are also branches for currently released major versions, which may have fixes and changes meant for upcoming patch releases within that major version.
-
-We tag all our releases (since we started using mercurial and git), and have binary downloads available for them.
-
-Experimental changes are sometimes developed in a separate [love-experiments][love-experiments] repository.
-
-Builds
-------
-
-Files for releases are in the [releases][releases] section on GitHub. [The site][site] has links to files and additional platform content for the latest release.
-
-There are also unstable/nightly builds:
-
-- Builds for some platforms are automatically created after each commit and are available through GitHub's CI interfaces.
-- For ubuntu linux they are in [ppa:bartbes/love-unstable][unstableppa]
-- For arch linux there's [love-git][aur] in the AUR.
+This is a fork of the 2D game framework, LÖVE.
 
 Test Suite
 ----------
@@ -37,18 +7,7 @@ The test suite in `testing/` covers all the LÖVE APIs, and tests them the same 
 You can run the suite locally like you would run a normal LÖVE project, e.g.:  
 `love testing`
 
-See the [readme][testsuite] in the testing folder for more info.  
-
-Contributing
-------------
-
-The best places to contribute are through the issue tracker and the official Discord server.
-
-For code contributions, pull requests and patches are welcome. Be sure to read the [source code style guide][codestyle].
-Changes and new features typically get discussed in the issue tracker or on Discord or the forums before a pull request is made.
-
-> [!NOTE] 
-> Pull requests, bug reports, and other contributions made with LLM / generative AI technology will not be accepted.
+See the [readme][testsuite] in the testing folder for more info.
 
 Compilation
 -----------
@@ -97,20 +56,3 @@ Dependencies
 - ModPlug
 - Vorbisfile
 - Theora
-
-[site]: https://love2d.org
-[wiki]: https://love2d.org/wiki
-[forums]: https://love2d.org/forums
-[discord]: https://discord.gg/rhUets9
-[subreddit]: https://www.reddit.com/r/love2d
-[dependencies-apple]: https://github.com/love2d/love-apple-dependencies
-[dependencies-ios]: https://github.com/love2d/love/releases
-[megasource]: https://github.com/love2d/megasource
-[unstableppa]: https://launchpad.net/~bartbes/+archive/love-unstable
-[aur]: https://aur.archlinux.org/packages/love-git
-[love-experiments]: https://github.com/slime73/love-experiments
-[codestyle]: https://love2d.org/wiki/Code_Style
-[android-repository]: https://github.com/love2d/love-android
-[releases]: https://github.com/love2d/love/releases
-[testsuite]: https://github.com/love2d/love/tree/main/testing
-[workflows]: https://github.com/love2d/love/actions/workflows/main.yml?query=branch%3Amain
