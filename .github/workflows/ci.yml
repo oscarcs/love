@@ -23,7 +23,6 @@ jobs:
       run:
         shell: bash
     env:
-      SDL_REVISION: 8e37db5e797b6167f3a00d697d816a684bd259c7 # SDL 3.4.10
       SDL_PREFIX: ${{ github.workspace }}/.ci/sdl-install
       CCACHE_DIR: ${{ github.workspace }}/.ci/ccache
       CCACHE_BASEDIR: ${{ github.workspace }}
@@ -45,6 +44,15 @@ jobs:
             libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dri \
             xvfb xauth openbox wmctrl
 
+      - name: Read SDL source identity
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          source = json.load(open('extra/dependencies/sources.json'))['sdl']
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('SDL_REVISION=' + source['sha256'] + '\n')
+          PYTHON
+
       - name: Restore SDL3
         id: sdl-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -52,18 +60,14 @@ jobs:
           path: ${{ env.SDL_PREFIX }}
           key: sdl3-${{ runner.os }}-${{ runner.arch }}-ubuntu24-${{ env.SDL_REVISION }}-v1
 
-      - name: Checkout SDL3
+      - name: Prepare SDL3 source
         if: steps.sdl-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          repository: libsdl-org/SDL
-          ref: ${{ env.SDL_REVISION }}
-          path: .ci/SDL
+        run: python3 extra/dependencies/fetch.py --profile linux --directory .ci/dependencies --only sdl
 
       - name: Build SDL3
         if: steps.sdl-cache.outputs.cache-hit != 'true'
         run: |
-          cmake -S .ci/SDL -B "$RUNNER_TEMP/sdl-build" -G Ninja \
+          cmake -S .ci/dependencies/sdl -B "$RUNNER_TEMP/sdl-build" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SDL_PREFIX" \
             -DCMAKE_INSTALL_LIBDIR=lib \
             -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_WAYLAND=OFF \

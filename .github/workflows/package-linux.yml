@@ -23,17 +23,11 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: source
-      - name: Checkout AppImage recipe
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          repository: love2d/love-appimage-source
-          ref: 0591237f5de186ab01e2d3ca047d94ec95986b5d
-          path: builder
       - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes \
-            build-essential cmake autoconf automake libtool pkg-config patchelf \
+            build-essential cmake ninja-build pkg-config patchelf \
             libasound2-dev libpulse-dev libaudio-dev libjack-dev libx11-dev libxext-dev \
             libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxinerama-dev \
             libxxf86vm-dev libxss-dev libxtst-dev libgl1-mesa-dev libdbus-1-dev \
@@ -41,29 +35,17 @@ jobs:
             fcitx-libs-dev libsamplerate0-dev libsndio-dev libwayland-dev \
             libxkbcommon-dev libdrm-dev libgbm-dev libcurl4-openssl-dev libfuse2 \
             libpipewire-0.3-dev libdecor-0-dev liburing-dev xvfb xauth wmctrl openbox
-      - name: Prepare pinned inputs
-        working-directory: builder
+      - name: Build from pinned dependency sources
         run: |
-          ln -s ../source "love2d-$GITHUB_SHA"
-          python3 ../source/extra/packaging/prepare-appimage.py
-          for attempt in 1 2 3; do
-            if make getdeps SYSTEM_CMAKE=1 LOVE_BRANCH="$GITHUB_SHA"; then break; fi
-            if [ "$attempt" = 3 ]; then exit 1; fi
-            sleep "$((attempt * 5))"
-          done
-      - name: Build AppImage
-        working-directory: builder
-        run: make AppImage SYSTEM_CMAKE=1 LOVE_BRANCH="$GITHUB_SHA" NUMBER_OF_PROCESSORS=2 2>&1 | tee "$RUNNER_TEMP/build.log"
-      - name: Stage packages and metadata
+          cmake -S source -B build -G Ninja -DLOVE_DEPENDENCIES=BUNDLED \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo '-DCMAKE_INSTALL_RPATH=$ORIGIN/../lib' \
+            2>&1 | tee "$RUNNER_TEMP/configure.log"
+          cmake --build build --target love --parallel 2 2>&1 | tee "$RUNNER_TEMP/build.log"
+      - name: Package AppImage and debug symbols
         run: |
-          mkdir dist
-          cp "builder/love-$GITHUB_SHA.AppImage" "dist/love-linux-${{ inputs.architecture }}.AppImage"
-          cp "builder/love-$GITHUB_SHA.AppImage-debug.tar.gz" "dist/love-linux-${{ inputs.architecture }}-debug.tar.gz"
+          python3 source/extra/packaging/appimage.py --build build --output dist
           python3 source/extra/packaging/manifest.py dist/manifest.json --source source \
-            --target "linux-${{ inputs.architecture }}" --dependency builder \
-            --dependency builder/SDL3-release-3.4.10 --dependency builder/LuaJIT-v2.1 \
-            --dependency builder/openal-soft-1.24.3 --dependency builder/zlib-v1.3 \
-            --dependency builder/harfbuzz-10.1.0 --downloads builder
+            --target "linux-${{ inputs.architecture }}" --sources source/.deps/linux/sources.json --downloads build
       - name: Test packaged AppImage (OpenGL)
         timeout-minutes: 5
         env:
@@ -102,6 +84,7 @@ jobs:
           name: linux-${{ inputs.architecture }}-failure
           path: |
             source/testing/output/
+            ${{ runner.temp }}/configure.log
             ${{ runner.temp }}/build.log
             ${{ runner.temp }}/opengl.log
             ${{ runner.temp }}/openbox.log

@@ -49,19 +49,13 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: source
-      - name: Checkout dependencies
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          repository: love2d/megasource
-          ref: 5118c13ca1dea1890e298c0ce5e410846913a5a8
-          path: megasource
       - name: Configure and build
         env:
           CFLAGS: /Zi
           CXXFLAGS: /Zi
           LDFLAGS: /DEBUG:FULL /OPT:REF /OPT:ICF
         run: |
-          cmake -S megasource -B build -A x64 "-DMEGA_LOVE=$PWD/source" "-DCMAKE_PDB_OUTPUT_DIRECTORY=$PWD/pdb" "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" 2>&1 | Tee-Object "$env:RUNNER_TEMP/configure.log"
+          cmake -S source -B build -A x64 -DLOVE_DEPENDENCIES=BUNDLED "-DCMAKE_PDB_OUTPUT_DIRECTORY=$PWD/pdb" "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" 2>&1 | Tee-Object "$env:RUNNER_TEMP/configure.log"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cmake --build build --config Release --parallel 2 2>&1 | Tee-Object "$env:RUNNER_TEMP/build.log"
           exit $LASTEXITCODE
@@ -71,9 +65,9 @@ jobs:
           cpack --config build/CPackConfig.cmake -C Release -G ZIP -B dist -D CPACK_PACKAGE_FILE_NAME=love-windows-x64
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           Get-ChildItem pdb -Recurse -Filter *.pdb | Copy-Item -Destination symbols
-          Copy-Item build/libs/LuaJIT/src/lua51.pdb symbols
+          Copy-Item build/dependencies/luajit/lua51.pdb symbols
           Compress-Archive symbols/*.pdb dist/love-windows-x64-debug.zip
-          python source/extra/packaging/manifest.py dist/manifest.json --source source --target windows-x64 --dependency megasource
+          python source/extra/packaging/manifest.py dist/manifest.json --source source --target windows-x64 --sources source/.deps/windows/sources.json
           exit $LASTEXITCODE
       - name: Prepare packaged executable for tests
         run: |
@@ -133,7 +127,7 @@ jobs:
     if: inputs.macos_arm64
     name: macOS ARM64 app ZIP
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     defaults:
       run:
         shell: bash
@@ -142,27 +136,18 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: source
-      - name: Checkout dependencies
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          repository: love2d/love-apple-dependencies
-          ref: a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e
-          path: apple-dependencies
-      - name: Build ARM64 app
+      - name: Build ARM64 app from source
         run: |
-          mv apple-dependencies/macOS/Frameworks source/platform/xcode/macosx/
-          mv apple-dependencies/shared source/platform/xcode/
-          xcodebuild archive -project source/platform/xcode/love.xcodeproj -scheme love-macosx \
-            -configuration Release -destination 'generic/platform=macOS' -archivePath "$PWD/love.xcarchive" \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGN_IDENTITY=- | tee "$RUNNER_TEMP/build.log"
+          cmake -S source -B build -DLOVE_DEPENDENCIES=BUNDLED -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 2>&1 | tee "$RUNNER_TEMP/configure.log"
+          cmake --build build --target love --parallel 3 2>&1 | tee "$RUNNER_TEMP/build.log"
       - name: Package app and debug symbols
         run: |
-          mkdir -p dist unpacked
-          ditto -c -k --sequesterRsrc --keepParent love.xcarchive/Products/Applications/love.app dist/love-macos-arm64.zip
-          ditto -c -k --sequesterRsrc --keepParent love.xcarchive/dSYMs dist/love-macos-arm64-debug.zip
+          python3 source/extra/packaging/macos.py --build build --output dist
+          mkdir unpacked
           ditto -x -k dist/love-macos-arm64.zip unpacked
           test "$(lipo -archs unpacked/love.app/Contents/MacOS/love)" = arm64
-          python3 source/extra/packaging/manifest.py dist/manifest.json --source source --target macos-arm64 --dependency apple-dependencies
+          python3 source/extra/packaging/manifest.py dist/manifest.json --source source --target macos-arm64 --sources source/.deps/macos/sources.json
       - name: Test packaged app (OpenGL)
         timeout-minutes: 5
         env:

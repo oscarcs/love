@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--target", required=True)
     parser.add_argument("--dependency", type=Path, action="append", default=[])
     parser.add_argument("--downloads", type=Path)
+    parser.add_argument("--sources", type=Path)
     args = parser.parse_args()
 
     revision = git(args.source, "rev-parse", "HEAD")
@@ -48,6 +49,8 @@ def main():
         manifest["dependencies"][path.name] = {
             "commit": git(path, "rev-parse", "HEAD"),
         }
+    if args.sources:
+        manifest["dependency_sources"] = json.loads(args.sources.read_text())
     if args.downloads:
         inputs = [p for p in sorted(args.downloads.glob("*.tar.gz"))
                   if not p.name.endswith(".AppImage-debug.tar.gz")]
