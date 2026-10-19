@@ -26,8 +26,10 @@ else()
   set_target_properties(liblove PROPERTIES INSTALL_RPATH "@loader_path")
   set_target_properties(love PROPERTIES INSTALL_RPATH "@executable_path/../Frameworks")
   install(TARGETS liblove LIBRARY DESTINATION love.app/Contents/Frameworks)
-  install(PROGRAMS "$<TARGET_FILE:${LOVE_SDL_TARGET}>" "$<TARGET_FILE:OpenAL>" ${LOVE_LUA_RUNTIME}
+  install(PROGRAMS "$<TARGET_FILE:${LOVE_SDL_TARGET}>" ${LOVE_LUA_RUNTIME}
     DESTINATION love.app/Contents/Frameworks)
+  install(PROGRAMS "$<TARGET_FILE:OpenAL>" DESTINATION love.app/Contents/Frameworks
+    RENAME "$<TARGET_SONAME_FILE_NAME:OpenAL>")
   install(TARGETS love BUNDLE DESTINATION .)
   install(DIRECTORY "${LOVE_DEPENDENCY_DIRECTORY}/package-assets/licenses/" DESTINATION love.app/Contents/Resources/licenses)
   install(CODE "

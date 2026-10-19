@@ -26,8 +26,8 @@ def main():
     symbols = stage / 'dSYMs'
     symbols.mkdir()
     for binary in [app / 'Contents/MacOS/love'] + list((app / 'Contents/Frameworks').glob('*.dylib')):
-        run('dsymutil', binary, '-o', symbols / (binary.name + '.dSYM'))
-        run('strip', '-S', binary)
+        run('xcrun', 'dsymutil', binary, '-o', symbols / (binary.name + '.dSYM'))
+        run('xcrun', 'strip', '-S', binary)
         run('codesign', '--force', '--sign', '-', binary)
     run('codesign', '--force', '--sign', '-', '--entitlements', root / 'platform/apple/love.entitlements', app)
     run('codesign', '--verify', '--deep', '--strict', app)

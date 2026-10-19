@@ -49,6 +49,12 @@ if(MINGW)
 	message(WARNING "Use Visual Studio with LOVE_DEPENDENCIES=BUNDLED instead.")
 endif()
 
+if(MSVC)
+	# Preserve the dependency build's multi-process compilation on Windows.
+	string(APPEND CMAKE_C_FLAGS_RELEASE " /MP")
+	string(APPEND CMAKE_CXX_FLAGS_RELEASE " /MP")
+endif()
+
 include(LoveMacros)
 
 # Extract version.h contents.
