@@ -8,6 +8,108 @@
 --------------------------------------------------------------------------------
 
 
+-- Changing backbuffer attachments must finish the old pass and preserve rendering.
+love.test.window.backbufferAttachments = function(test)
+  if test:isOS('iOS', 'Android') then
+    test:skipTest('requires desktop window mode changes')
+    return
+  end
+
+  local g = love.graphics
+  local width, height, flags = love.window.getMode()
+  g.push('all')
+  g.reset()
+  g.present()
+  local cases = {
+    {depth = false, stencil = false},
+    {depth = true, stencil = false},
+    {depth = false, stencil = true},
+    {depth = true, stencil = true},
+    {depth = true, stencil = true, resize = true},
+    {depth = false, stencil = false, resize = true},
+    {depth = true, stencil = true, msaa = 4},
+    {depth = false, stencil = false, msaa = 4},
+    {depth = true, stencil = false, msaa = 4},
+    {depth = false, stencil = true, msaa = 4},
+    {depth = true, stencil = true},
+  }
+
+  for _, openEncoder in ipairs({false, true}) do
+    for _, settings in ipairs(cases) do
+      -- Request readback before acquiring this frame's drawable.
+      local screenshot
+      g.captureScreenshot(function(image) screenshot = image end)
+      g.setDepthMode()
+      g.setStencilState()
+      g.setColor(1, 1, 1, 1)
+      g.rectangle('fill', 0, 0, 8, 8)
+      if openEncoder then g.flushBatch() end
+
+      local w = width + (settings.resize and 16 or 0)
+      test:assertTrue(love.window.updateMode(w, height, {
+        depth = settings.depth, stencil = settings.stencil,
+        msaa = settings.msaa or 0, usedpiscale = false,
+      }), 'change backbuffer settings with pending draws')
+
+      g.origin()
+      g.clear(0, 0, 0, 1, 0, 1)
+      if settings.depth then g.setDepthMode('less', true) end
+      g.setColor(1, 0, 0, 1)
+      g.rectangle('fill', 0, 0, 8, 8)
+      g.setColor(0, 1, 0, 1)
+      g.rectangle('fill', 0, 0, 8, 8)
+      g.setDepthMode()
+
+      if settings.stencil then
+        g.setColorMask(false, false, false, false)
+        g.setStencilState('replace', 'always', 1)
+        g.rectangle('fill', 12, 0, 8, 8)
+        g.setColorMask(true, true, true, true)
+        g.setStencilState('keep', 'equal', 0)
+        g.setColor(0, 0, 1, 1)
+        g.rectangle('fill', 12, 0, 8, 8)
+        g.setStencilState()
+      end
+
+      g.present()
+      test:assertNotNil(screenshot)
+      if screenshot then
+        test:assertEquals(g.getPixelWidth(), screenshot:getWidth(), 'drawable width matches resized window')
+        test:assertEquals(g.getPixelHeight(), screenshot:getHeight(), 'drawable height matches window')
+        local r, green = screenshot:getPixel(2, 2)
+        test:assertEquals(settings.depth and 1 or 0, r, 'depth attachment controls occlusion')
+        test:assertEquals(settings.depth and 0 or 1, green, 'drawing works with depth enabled or disabled')
+        if settings.stencil then
+          local _, _, blue = screenshot:getPixel(14, 2)
+          test:assertEquals(0, blue, 'stencil attachment still masks drawing')
+        end
+      end
+    end
+  end
+
+  -- Rebuilding the window backbuffer must not invalidate existing canvases.
+  local canvas = g.newCanvas(16, 16)
+  g.setCanvas(canvas)
+  g.clear(0, 0, 0, 1)
+  g.setColor(1, 0, 0, 1)
+  g.rectangle('fill', 0, 0, 8, 16)
+  g.flushBatch()
+  g.setCanvas()
+  love.window.updateMode(width + 16, height, {depth = false, stencil = false, msaa = 0})
+  g.setCanvas(canvas)
+  g.setColor(0, 1, 0, 1)
+  g.rectangle('fill', 8, 0, 8, 16)
+  g.setCanvas()
+  local pixels = g.readbackTexture(canvas)
+  test:assertEquals(1, pixels:getPixel(2, 2), 'canvas contents survive window changes')
+  local _, green = pixels:getPixel(10, 2)
+  test:assertEquals(1, green, 'canvas drawing continues after window changes')
+
+  love.window.updateMode(width, height, flags)
+  g.pop()
+end
+
+
 -- love.window.focus
 love.test.window.focus = function(test)
   -- cant test as doesnt return anything

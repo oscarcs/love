@@ -489,6 +489,18 @@ void Graphics::backbufferChanged(const BackbufferSettings &settings)
 	bool dschanged = settings.stencil != backbufferSettings.stencil || settings.depth != backbufferSettings.depth;
 	bool msaachanged = settings.msaa != backbufferSettings.msaa;
 
+	if ((sizechanged || dschanged || msaachanged) && !isRenderTargetActive())
+	{
+		// Finish draws against the old attachments before replacing them. Creating
+		// a new texture can submit encoders while the backbuffer is being rebuilt.
+		flushBatchedDraws();
+		submitRenderEncoder(SUBMIT_DONE);
+	}
+
+	// The next backbuffer pass needs a drawable matching the new window size.
+	if (sizechanged)
+		activeDrawable = nil;
+
 	backbufferSettings = settings;
 
 	if (!isRenderTargetActive())
@@ -689,6 +701,14 @@ id<MTLRenderCommandEncoder> Graphics::useRenderEncoder()
 			passDesc.colorAttachments[0].slice = 0;
 			passDesc.colorAttachments[0].depthPlane = 0;
 
+			// Depth and stencil can be disabled independently between passes.
+			passDesc.depthAttachment.texture = nil;
+			passDesc.depthAttachment.resolveTexture = nil;
+			passDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+			passDesc.stencilAttachment.texture = nil;
+			passDesc.stencilAttachment.resolveTexture = nil;
+			passDesc.stencilAttachment.storeAction = MTLStoreActionDontCare;
+
 			RenderTarget rt(backbufferDepthStencil);
 			if (rt.texture != nullptr && isPixelFormatDepth(rt.texture->getPixelFormat()))
 				setAttachment(rt, passDesc.depthAttachment, attachmentStoreActions.depth, false);
@@ -735,14 +755,12 @@ void Graphics::submitRenderEncoder(SubmitType type)
 		for (size_t i = 0; i < rts.colors.size(); i++)
 			[renderEncoder setColorStoreAction:(store ? MTLStoreActionStore : actions.color[i]) atIndex:i];
 
-		love::graphics::Texture *ds = rts.depthStencil.texture.get();
-		if (isbackbuffer)
-			ds = backbufferDepthStencil;
-
-		if ((rts.temporaryRTFlags & TEMPORARY_RT_DEPTH) != 0 || (ds != nullptr && isPixelFormatDepth(ds->getPixelFormat())))
+		// Finalize the attachments actually bound to this encoder, even if the
+		// window's backbuffer resources have changed since the pass began.
+		if (passDesc.depthAttachment.texture != nil)
 			[renderEncoder setDepthStoreAction:store ? MTLStoreActionStore : actions.depth];
 
-		if ((rts.temporaryRTFlags & TEMPORARY_RT_STENCIL) != 0 || (ds != nullptr && isPixelFormatStencil(ds->getPixelFormat())))
+		if (passDesc.stencilAttachment.texture != nil)
 			[renderEncoder setStencilStoreAction:store ? MTLStoreActionStore : actions.stencil];
 
 		[renderEncoder endEncoding];
