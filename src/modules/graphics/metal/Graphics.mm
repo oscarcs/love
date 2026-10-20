@@ -995,7 +995,7 @@ void Graphics::applyRenderState(id<MTLRenderCommandEncoder> encoder, VertexAttri
 
 	if ((dirtyState & pipelineStateBits) != 0 || attributesID != lastRenderPipelineKey.vertexAttributesID)
 	{
-		auto &key = lastRenderPipelineKey;
+		auto key = lastRenderPipelineKey;
 
 		key.vertexAttributesID = attributesID;
 
@@ -1011,6 +1011,7 @@ void Graphics::applyRenderState(id<MTLRenderCommandEncoder> encoder, VertexAttri
 		}
 
 		[encoder setRenderPipelineState:pipeline];
+		lastRenderPipelineKey = key;
 	}
 
 	if (dirtyState & (STATEBIT_DEPTH | STATEBIT_STENCIL))

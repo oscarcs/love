@@ -2151,47 +2151,61 @@ void Graphics::flushBatchedDraws()
 
 	pushIdentityTransform();
 
-	if (sbstate.indexedDraw)
+	// Drawing can fail while creating a backend pipeline. Discard the failed
+	// batch and restore temporary state so subsequent Lua draws can recover.
+	auto finish = [&]()
 	{
-		usedsizes[2] = sizeof(uint16) * sbstate.indexCount;
+		for (int i = 0; i < 2; i++)
+		{
+			if (usedsizes[i] > 0)
+				sbstate.vb[i]->markUsed(usedsizes[i]);
+		}
 
-		DrawIndexedCommand cmd(attributesID, &buffers, sbstate.indexBuffer);
-		cmd.primitiveType = sbstate.primitiveMode;
-		cmd.indexCount = sbstate.indexCount;
-		cmd.indexType = INDEX_UINT16;
-		cmd.indexBufferOffset = sbstate.indexBuffer->unmap(usedsizes[2]);
-		cmd.texture = getTextureOrDefaultForActiveShader(sbstate.texture);
-		draw(cmd);
+		if (usedsizes[2] > 0)
+			sbstate.indexBuffer->markUsed(usedsizes[2]);
 
-		sbstate.indexBufferMap = StreamBuffer::MapInfo();
-	}
-	else
+		popTransform();
+
+		if (attributes.isEnabled(ATTRIB_COLOR))
+			setColor(nc);
+
+		sbstate.vertexCount = 0;
+		sbstate.indexCount = 0;
+		sbstate.flushing = false;
+	};
+
+	try
 	{
-		DrawCommand cmd(attributesID, &buffers);
-		cmd.primitiveType = sbstate.primitiveMode;
-		cmd.vertexStart = 0;
-		cmd.vertexCount = sbstate.vertexCount;
-		cmd.texture = getTextureOrDefaultForActiveShader(sbstate.texture);
-		draw(cmd);
-	}
+		if (sbstate.indexedDraw)
+		{
+			usedsizes[2] = sizeof(uint16) * sbstate.indexCount;
 
-	for (int i = 0; i < 2; i++)
+			DrawIndexedCommand cmd(attributesID, &buffers, sbstate.indexBuffer);
+			cmd.primitiveType = sbstate.primitiveMode;
+			cmd.indexCount = sbstate.indexCount;
+			cmd.indexType = INDEX_UINT16;
+			cmd.indexBufferOffset = sbstate.indexBuffer->unmap(usedsizes[2]);
+			cmd.texture = getTextureOrDefaultForActiveShader(sbstate.texture);
+			sbstate.indexBufferMap = StreamBuffer::MapInfo();
+			draw(cmd);
+		}
+		else
+		{
+			DrawCommand cmd(attributesID, &buffers);
+			cmd.primitiveType = sbstate.primitiveMode;
+			cmd.vertexStart = 0;
+			cmd.vertexCount = sbstate.vertexCount;
+			cmd.texture = getTextureOrDefaultForActiveShader(sbstate.texture);
+			draw(cmd);
+		}
+	}
+	catch (...)
 	{
-		if (usedsizes[i] > 0)
-			sbstate.vb[i]->markUsed(usedsizes[i]);
+		finish();
+		throw;
 	}
 
-	if (usedsizes[2] > 0)
-		sbstate.indexBuffer->markUsed(usedsizes[2]);
-
-	popTransform();
-
-	if (attributes.isEnabled(ATTRIB_COLOR))
-		setColor(nc);
-
-	sbstate.vertexCount = 0;
-	sbstate.indexCount = 0;
-	sbstate.flushing = false;
+	finish();
 }
 
 void Graphics::flushBatchedDrawsGlobal()

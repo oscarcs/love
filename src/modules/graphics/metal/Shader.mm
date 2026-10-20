@@ -932,10 +932,12 @@ id<MTLRenderPipelineState> Shader::getCachedRenderPipeline(graphics::Graphics *g
 	NSError *err = nil;
 	id<MTLRenderPipelineState> pipeline = [device newRenderPipelineStateWithDescriptor:desc error:&err];
 
-	if (err != nil)
+	if (pipeline == nil)
 	{
-		NSLog(@"Error creating render pipeline: %@", err);
-		return nil;
+		if (err != nil)
+			throw love::Exception("Error creating render pipeline: %s", err.localizedDescription.UTF8String);
+		else
+			throw love::Exception("Error creating render pipeline.");
 	}
 
 	cachedRenderPipelines[key] = CFBridgingRetain(pipeline);

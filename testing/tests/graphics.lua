@@ -818,6 +818,83 @@ love.test.graphics.Quad = function(test)
 end
 
 
+-- Metal pipeline errors must reach Lua without poisoning later draws.
+love.test.graphics.metalPipelineError = function(test)
+  if love.graphics.getRendererInfo() ~= 'Metal' then
+    test:skipTest('Metal pipeline validation')
+    return
+  end
+
+  local shader = love.graphics.newShader[[
+    #pragma language glsl4
+    #ifdef PIXEL
+    layout(location = 0) out vec2 result;
+    void pixelmain() { result = vec2(1.0, 0.0); }
+    #endif
+  ]]
+  local canvas = love.graphics.newCanvas(8, 8, {format = 'rgba8'})
+  local compatible = love.graphics.newCanvas(8, 8, {format = 'rg8'})
+  local mesh = love.graphics.newMesh({{0, 0, 0, 0}, {2, 0, 0, 0}, {0, 2, 0, 0}}, 'triangles', 'static')
+
+  love.graphics.push('all')
+  love.graphics.origin()
+  love.graphics.translate(2, 3)
+  love.graphics.setColor(0.25, 0.5, 0.75, 1)
+  love.graphics.setBlendState('add', 'one', 'zero')
+  love.graphics.setCanvas(canvas)
+  love.graphics.clear(0, 0, 0, 0)
+  love.graphics.setShader(shader)
+
+  local draws = {
+    function()
+      love.graphics.rectangle('fill', 0, 0, 2, 2)
+      love.graphics.flushBatch()
+    end,
+    function() love.graphics.draw(mesh) end,
+  }
+  for _, draw in ipairs(draws) do
+    for attempt = 1, 2 do
+      local ok, err = pcall(draw)
+      test:assertFalse(ok, 'invalid pipeline reports a Lua error on attempt ' .. attempt)
+      test:assertTrue(tostring(err):find('Error creating render pipeline', 1, true) ~= nil, 'pipeline error includes context')
+      local r, g, b, a = love.graphics.getColor()
+      test:assertEquals(0.25, r, 'failed draw restores red')
+      test:assertEquals(0.5, g, 'failed draw restores green')
+      test:assertEquals(0.75, b, 'failed draw restores blue')
+      test:assertEquals(1, a, 'failed draw restores alpha')
+      local x, y = love.graphics.transformPoint(0, 0)
+      test:assertCoords({2, 3}, {x, y}, 'failed draw restores the transform')
+    end
+  end
+
+  -- The same shader must still work with a compatible target after failure.
+  love.graphics.setCanvas(compatible)
+  love.graphics.clear(0, 0, 0, 0)
+  love.graphics.rectangle('fill', 0, 0, 2, 2)
+  love.graphics.flushBatch()
+  love.graphics.draw(mesh)
+  love.graphics.setCanvas()
+  local pixels = love.graphics.readbackTexture(compatible)
+  test:assertEquals(1, pixels:getPixel(2, 3), 'shader draws after switching to a compatible target')
+
+  -- Check ordinary drawing too, including the original transform.
+  love.graphics.setShader()
+  love.graphics.setCanvas(canvas)
+  love.graphics.setColor(1, 0, 0, 1)
+  love.graphics.rectangle('fill', 0, 0, 2, 2)
+  love.graphics.flushBatch()
+  love.graphics.setCanvas()
+  pixels = love.graphics.readbackTexture(canvas)
+  local r, g, b, a = pixels:getPixel(2, 3)
+  test:assertEquals(1, r, 'normal drawing recovers')
+  test:assertEquals(0, g, 'normal drawing has the requested color')
+  test:assertEquals(0, b, 'normal drawing has the requested color')
+  test:assertEquals(1, a, 'normal drawing writes alpha')
+  test:assertEquals(0, select(4, pixels:getPixel(0, 0)), 'recovered drawing uses the original transform')
+  love.graphics.pop()
+end
+
+
 -- Shader (love.graphics.newShader)
 love.test.graphics.Shader = function(test)
 
