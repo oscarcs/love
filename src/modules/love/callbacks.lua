@@ -201,7 +201,8 @@ function love.run()
 			love.graphics.present()
 		end
 
-		if love.timer then love.timer.sleep(0.001) end
+		-- The browser schedules our next frame; sleeping blocks its UI thread.
+		if love.timer and love._os ~= "Web" then love.timer.sleep(0.001) end
 	end
 end
 
@@ -342,7 +343,7 @@ function love.errorhandler(msg)
 		draw()
 
 		if love.timer then
-			love.timer.sleep(0.001)
+			if love._os ~= "Web" then love.timer.sleep(0.001) end
 		end
 	end
 

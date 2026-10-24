@@ -50,9 +50,14 @@
 #include <OpenAL-Soft/al.h>
 #endif
 #else
+#ifdef LOVE_EMSCRIPTEN
+#include <AL/alc.h>
+#include <AL/al.h>
+#else
 #include <alc.h>
 #include <al.h>
 #include <alext.h>
+#endif
 #endif
 
 namespace love
@@ -131,6 +136,8 @@ public:
 	std::string getPlaybackDevice() override;
 	void getPlaybackDevices(std::vector<std::string> &list) override;
 	void setPlaybackDevice(const char *name) override;
+
+	void poolUpdate() override;
 
 private:
 

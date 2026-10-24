@@ -508,6 +508,10 @@ private:
 
 love::graphics::StreamBuffer *CreateStreamBuffer(BufferUsage mode, size_t size)
 {
+#ifdef LOVE_EMSCRIPTEN
+	// WebGL does not support client-side vertex arrays or buffer mapping.
+	return new StreamBufferSubDataOrphan(mode, size);
+#endif
 	if (gl.isCoreProfile())
 	{
 		if (!gl.bugs.clientWaitSyncStalls)

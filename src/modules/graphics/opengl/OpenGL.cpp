@@ -808,6 +808,15 @@ void OpenGL::setScissor(const Rect &v, bool rtActive)
 
 void OpenGL::setEnableState(EnableState enablestate, bool enable)
 {
+#ifdef LOVE_EMSCRIPTEN
+	// WebGL performs conversion according to the framebuffer's format and has
+	// no FRAMEBUFFER_SRGB enable/disable capability.
+	if (enablestate == ENABLE_FRAMEBUFFER_SRGB)
+	{
+		state.enableState[enablestate] = enable;
+		return;
+	}
+#endif
 	GLenum glstate = GL_NONE;
 
 	switch (enablestate)
@@ -2018,7 +2027,9 @@ uint32 OpenGL::getPixelFormatUsageFlags(PixelFormat pixelformat)
 		break;
 
 	case PIXELFORMAT_LA8_UNORM:
+#ifndef LOVE_EMSCRIPTEN
 		flags |= commonsample;
+#endif
 		break;
 
 	case PIXELFORMAT_RGBA4_UNORM:

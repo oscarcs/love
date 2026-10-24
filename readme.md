@@ -17,6 +17,21 @@ Run the commands below from the repository root. Bundled builds require CMake
 3.21+, Python 3.9+, Git, and the platform's C/C++ compiler and SDK. Unix builds
 also require `make` for LuaJIT. Dependencies download during configuration.
 
+### Web
+
+Build this fork for WebGL 2 / WebAssembly with Emscripten 4.0.10:
+
+```sh
+source /path/to/emsdk/emsdk_env.sh
+cmake --preset web
+cmake --build --preset web
+python3 platform/web/package.py /path/to/game build/web-game
+python3 -m http.server 8123 --bind 127.0.0.1 --directory build/web-game
+```
+
+Open http://localhost:8123 and click Play. See the [web guide](platform/web/readme.md)
+for packaging options, browser limitations, and port attribution.
+
 ### Windows
 
 With Visual Studio's C++ build tools installed:

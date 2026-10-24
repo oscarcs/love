@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LÖVE</title>
+<style>
+html,body{margin:0;height:100%;background:#151820;color:#eee;font:16px system-ui}body{display:flex;flex-direction:column;align-items:center;justify-content:center}canvas{max-width:100%;max-height:90vh;object-fit:contain;outline:none}button{padding:12px 24px;font:inherit;cursor:pointer}#status{white-space:pre-wrap;max-width:90%;padding:12px}
+</style>
+</head>
+<body>
+<button id="start" disabled>Loading…</button>
+<div id="status" role="status"></div>
+<canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+<script src="love.js"></script>
+<script>
+const status = document.getElementById('status');
+const start = document.getElementById('start');
+const canvas = document.getElementById('canvas');
+const fail = error => { status.textContent = String(error); console.error(error); };
+(async () => {
+  const response = await fetch('game.love');
+  if (!response.ok) throw new Error('Could not download game: HTTP ' + response.status);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const runtime = await Love({canvas, print: console.log, printErr: console.error, onAbort: fail});
+  runtime.FS.writeFile('/game.love', bytes);
+  start.disabled = false;
+  start.textContent = 'Play';
+  start.onclick = () => {
+    start.hidden = true;
+    canvas.focus();
+    try { runtime.callMain(['/game.love']); } catch (error) { fail(error); }
+  };
+  window.loveRuntime = runtime;
+})().catch(fail);
+</script>
+</body>
+</html>

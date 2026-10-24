@@ -200,8 +200,10 @@ Audio::Audio()
 		throw;
 	}
 
+#ifndef LOVE_EMSCRIPTEN
 	poolThread = new PoolThread(pool);
 	poolThread->start();
+#endif
 	
 #ifdef LOVE_IOS
 	love::ios::initAudioSessionInterruptionHandler();
@@ -223,8 +225,11 @@ Audio::~Audio()
 #ifdef LOVE_IOS
 	love::ios::destroyAudioSessionInterruptionHandler();
 #endif
-	poolThread->setFinish();
-	poolThread->wait();
+	if (poolThread)
+	{
+		poolThread->setFinish();
+		poolThread->wait();
+	}
 
 	delete poolThread;
 	delete pool;
@@ -422,6 +427,7 @@ void Audio::getPlaybackDevices(std::vector<std::string> &list)
 
 void Audio::setPlaybackDevice(const char *name)
 {
+#ifndef LOVE_EMSCRIPTEN
 #ifndef ALC_SOFT_reopen_device
 	typedef ALCboolean (ALC_APIENTRY*LPALCREOPENDEVICESOFT)(ALCdevice *device,
 		const ALCchar *deviceName, const ALCint *attribs);
@@ -442,6 +448,9 @@ void Audio::setPlaybackDevice(const char *name)
 
 	if (alcReopenDeviceSOFT(device, (const ALCchar *) name, attribs.data()) == ALC_FALSE)
 		throw love::Exception("Cannot set output device: %s", alcGetString(device, alcGetError(device)));
+#else
+	love::audio::Audio::setPlaybackDevice(name);
+#endif
 }
 
 void Audio::setVolume(float volume)
@@ -741,6 +750,12 @@ bool Audio::isEFXsupported() const
 #else
 	return false;
 #endif
+}
+
+
+void Audio::poolUpdate()
+{
+	pool->update();
 }
 
 bool Audio::setOutputSpatialization(bool enable, const char *filter)

@@ -15,7 +15,7 @@ import fetch
 
 class SourcesTest(unittest.TestCase):
     def test_all_profiles_are_pinned(self):
-        for profile in ('linux', 'windows', 'macos', 'ios', 'android'):
+        for profile in ('linux', 'windows', 'macos', 'ios', 'android', 'web'):
             for entry in fetch.entries(profile).values():
                 self.assertTrue(entry['url'].startswith('https://'))
                 self.assertRegex(entry['sha256'], r'^[0-9a-f]{64}$')
@@ -31,7 +31,7 @@ class SourcesTest(unittest.TestCase):
                       [p['file'] for p in android['openal']['patches']])
 
     def test_patch_hashes_match_lock(self):
-        for profile in ('linux', 'windows', 'macos', 'ios', 'android'):
+        for profile in ('linux', 'windows', 'macos', 'ios', 'android', 'web'):
             for entry in fetch.entries(profile).values():
                 for patch in entry.get('patches', []):
                     self.assertEqual(fetch.digest(fetch.LOCK.parent / patch['file']), patch['sha256'])

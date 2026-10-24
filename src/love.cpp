@@ -50,6 +50,10 @@ extern "C" {
 #include "common/ios.h"
 #endif
 
+#ifdef LOVE_EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 #ifdef LOVE_WINDOWS
 extern "C"
 {
@@ -262,11 +266,69 @@ static DoneAction runlove(int argc, char **argv, int &retval, love::Variant &res
 	lua_pushvalue(L, -2);
 	int stackpos = lua_gettop(L);
 	int nres;
+#ifdef LOVE_EMSCRIPTEN
+	// Browser callbacks outlive main's stack, including its argv allocation.
+	struct WebRun
+	{
+		lua_State *L;
+		int stackpos;
+		std::vector<std::string> arguments;
+	};
+	auto state = new WebRun{L, stackpos, {}};
+	for (int i = 0; i < argc; i++)
+		state->arguments.emplace_back(argv[i]);
+
+	emscripten_set_main_loop_arg([](void *arg) {
+		auto state = static_cast<WebRun *>(arg);
+		lua_State *L = state->L;
+		int nres = 0;
+		int status = love::luax_resume(L, 0, &nres);
+		if (status == LUA_YIELD)
+		{
+#if LUA_VERSION_NUM >= 504
+			lua_pop(L, nres);
+#else
+			lua_pop(L, lua_gettop(L) - state->stackpos);
+#endif
+			return;
+		}
+
+		emscripten_cancel_main_loop();
+		int retidx = state->stackpos;
+		bool restart = status == 0 && lua_type(L, retidx) == LUA_TSTRING
+			&& strcmp(lua_tostring(L, retidx), "restart") == 0;
+		love::Variant restartvalue;
+		if (restart && retidx < lua_gettop(L))
+			restartvalue = love::luax_checkvariant(L, retidx + 1, false);
+		int retval = lua_isnumber(L, retidx) ? (int) lua_tonumber(L, retidx) : 0;
+		if (status != 0)
+		{
+			fprintf(stderr, "LOVE: %s\n", lua_tostring(L, -1));
+			retval = 1;
+		}
+		lua_close(L);
+
+		if (restart)
+		{
+			std::vector<char *> argv;
+			for (auto &argument : state->arguments)
+				argv.push_back(&argument[0]);
+			runlove((int) argv.size(), argv.data(), retval, restartvalue);
+		}
+		else
+		{
+			EM_ASM({ if (Module['onLoveQuit']) Module['onLoveQuit']($0); }, retval);
+		}
+		delete state;
+	}, state, 0, 0);
+	return DONE_QUIT;
+#else
 	while (love::luax_resume(L, 0, &nres) == LUA_YIELD)
 #if LUA_VERSION_NUM >= 504
 		lua_pop(L, nres);
 #else
 		lua_pop(L, lua_gettop(L) - stackpos);
+#endif
 #endif
 
 	retval = 0;

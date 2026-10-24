@@ -1,0 +1,39 @@
+name: Web
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: emscripten-core/emsdk
+          ref: d7b4130688bfa348392b921ab04015aa15c4f154
+          path: .ci/emsdk
+      - name: Install Emscripten
+        run: |
+          .ci/emsdk/emsdk install 4.0.10
+          .ci/emsdk/emsdk activate 4.0.10
+      - name: Build
+        run: |
+          source .ci/emsdk/emsdk_env.sh
+          cmake --preset web
+          cmake --build --preset web --parallel 2
+          python3 platform/web/package.py platform/web/tests/game build/web-smoke
+      - name: Browser smoke tests
+        run: |
+          npm install --prefix .ci/browser playwright@1.62.1
+          .ci/browser/node_modules/.bin/playwright install --with-deps chromium firefox
+          python3 -m http.server 8124 --bind 127.0.0.1 --directory build/web-smoke &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs
+          BROWSER=firefox NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs

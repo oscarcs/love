@@ -29,6 +29,16 @@
 #include <algorithm>
 #include <limits>
 
+#ifdef LOVE_EMSCRIPTEN
+#include <emscripten.h>
+
+// WebGL 2 supports buffer readback, but not mapping. Copy directly into
+// Wasm memory instead of relying on Emscripten's GL mapping emulation.
+EM_JS(void, loveWebGetBufferSubData, (unsigned int target, size_t offset, size_t size, void *data), {
+	GLctx.getBufferSubData(target, offset, HEAPU8, data, size);
+});
+#endif
+
 namespace love
 {
 namespace graphics
@@ -196,7 +206,14 @@ void *Buffer::map(MapType map, size_t offset, size_t size)
 	if (map == MAP_READ_ONLY)
 	{
 		gl.bindBuffer(mapUsage, buffer);
+#ifdef LOVE_EMSCRIPTEN
+		auto gfx = Module::getInstance<Graphics>(Module::M_GRAPHICS);
+		data = (char *) gfx->getBufferMapMemory(size);
+		if (data != nullptr)
+			loveWebGetBufferSubData(target, offset, size, data);
+#else
 		data = (char *) glMapBufferRange(target, offset, size, GL_MAP_READ_BIT);
+#endif
 	}
 	else if (ownsMemoryMap)
 	{
@@ -233,8 +250,13 @@ void Buffer::unmap(size_t usedoffset, size_t usedsize)
 
 	if (mappedType == MAP_READ_ONLY)
 	{
+#ifdef LOVE_EMSCRIPTEN
+		auto gfx = Module::getInstance<Graphics>(Module::M_GRAPHICS);
+		gfx->releaseBufferMapMemory(memoryMap);
+#else
 		gl.bindBuffer(mapUsage, buffer);
 		glUnmapBuffer(target);
+#endif
 		if (!ownsMemoryMap)
 			memoryMap = nullptr;
 		return;

@@ -40,6 +40,10 @@ if(APPLE)
 endif()
 
 set(CMAKE_MODULE_PATH "${love_SOURCE_DIR}/extra/cmake" ${CMAKE_MODULE_PATH})
+if(EMSCRIPTEN)
+  add_compile_options(-fexceptions)
+  set(LOVE_JIT OFF CACHE BOOL "Use LuaJIT" FORCE)
+endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Needed for shared libs on Linux. (-fPIC).
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)	# Allow grouping projects in Visual Studio
@@ -1567,7 +1571,7 @@ target_link_libraries(love_3p_lua53 lovedep::Lua)
 # Lua HTTPS
 #
 
-add_library(love_3p_luahttps
+add_library(love_3p_luahttps EXCLUDE_FROM_ALL
 	# These are platform-dependent but have ifdef guards to make sure they only
 	# compile on supported platforms.
 	src/libraries/luahttps/src/android/AndroidClient.cpp
@@ -1822,7 +1826,7 @@ if(MINGW)
 	set(CMAKE_RC_FLAGS ${CMAKE_RC_FLAGS} "-c 65001 --preprocessor-arg=-finput-charset=UTF-16LE")
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(EMSCRIPTEN OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
 	set(LOVE_LIBRARY_TYPE STATIC)
 else()
 	set(LOVE_LIBRARY_TYPE SHARED)
@@ -1882,6 +1886,9 @@ set(LIBLOVE_LIBRARIES
 	love_3p_wuff
 	love_3p_xxhash
 )
+if(EMSCRIPTEN)
+  list(REMOVE_ITEM LIBLOVE_LIBRARIES love_3p_luahttps)
+endif()
 target_link_libraries(liblove ${LIBLOVE_DEPENDENCIES} ${LIBLOVE_LIBRARIES})
 
 if(LOVE_EXTRA_DEPENDECIES)
@@ -1930,6 +1937,9 @@ endif()
 
 target_sources(love PRIVATE src/love.cpp)
 target_link_libraries(love PRIVATE liblove)
+if(EMSCRIPTEN)
+  include(platform/web/Web.cmake)
+endif()
 set_target_properties(love PROPERTIES
 	C_VISIBILITY_PRESET hidden
 	CXX_VISIBILITY_PRESET hidden
@@ -2057,7 +2067,7 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 			DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/mimetypes)
 endif()
 
-if(LOVE_DEPENDENCIES STREQUAL "BUNDLED" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(LOVE_DEPENDENCIES STREQUAL "BUNDLED" AND NOT EMSCRIPTEN AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
 	file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/runtime-$<CONFIG>.txt"
 		CONTENT "$<TARGET_FILE:liblove>\n$<TARGET_FILE:${LOVE_SDL_TARGET}>\n$<TARGET_FILE:OpenAL>\n${LOVE_LUAJIT_LIBRARY}\n")
 endif()
