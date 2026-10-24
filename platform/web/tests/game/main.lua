@@ -32,6 +32,27 @@ function love.load()
   bufferReadback = love.graphics.readbackBufferAsync(buffer, 8, 4)
   bufferReadback:wait() -- Must return without spinning on the browser thread.
   textureReadback = love.graphics.readbackTextureAsync(canvas)
+  -- Indexed mesh and sprite batching must work without client-array emulation.
+  local target = love.graphics.newCanvas(16, 16)
+  local mesh = love.graphics.newMesh({
+    {0, 0, 0, 0, 1, 1, 1, 1}, {16, 0, 0, 0, 1, 1, 1, 1},
+    {0, 16, 0, 0, 1, 1, 1, 1}}, 'triangles', 'dynamic')
+  mesh:setVertexMap(1, 2, 3)
+  love.graphics.setCanvas(target)
+  love.graphics.clear(0, 0, 0, 1)
+  love.graphics.setColor(0, 1, 0, 1)
+  love.graphics.draw(mesh)
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.setCanvas()
+  local mr, mg = love.graphics.readbackTexture(target):getPixel(2, 2)
+  assert(mr < .01 and mg > .99, 'Indexed mesh pixel mismatch')
+  local batch = love.graphics.newSpriteBatch(canvas, 2, 'dynamic')
+  batch:add(0, 0)
+  love.graphics.setCanvas(target)
+  love.graphics.draw(batch)
+  love.graphics.setCanvas()
+  local br, bg = love.graphics.readbackTexture(target):getPixel(2, 2)
+  assert(br > .99 and bg < .01, 'Sprite batch pixel mismatch')
   shader = love.graphics.newShader([[
     vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pixel) {
       return Texel(tex, uv) * color;
@@ -68,5 +89,10 @@ function love.draw()
   love.graphics.print('WebGL 2: fonts, shader, canvas, audio', 10, 130)
 end
 function love.keypressed(key)
+  if key == 'r' then
+    assert(love.window.setMode(400, 240, {resizable = true, vsync = 0}))
+    assert(love.graphics.getWidth() == 400 and love.graphics.getHeight() == 240)
+    print('LOVE_WEB_RESIZE_OK')
+  end
   if key == 'q' then love.event.quit(0) end
 end

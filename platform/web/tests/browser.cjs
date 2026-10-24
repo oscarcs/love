@@ -21,10 +21,14 @@ const playwright = require('playwright');
       await page.evaluate(() => new Promise((resolve, reject) =>
         loveRuntime.FS.syncfs(false, error => error ? reject(error) : resolve())));
     }
+    await page.keyboard.press('r');
+    await expectMessage('LOVE_WEB_RESIZE_OK');
     if (process.env.SMOKE_SCREENSHOT) await page.screenshot({path: process.env.SMOKE_SCREENSHOT});
-    await page.evaluate(() => { loveRuntime.onLoveQuit = code => { window.quitCode = code; }; });
+    await page.evaluate(() => window.addEventListener('lovequit', event => { window.quitCode = event.detail; }));
     await page.keyboard.press('q');
     await page.waitForFunction(() => window.quitCode === 0);
+    assert.equal(await page.locator('#status').innerText(), 'Game closed.');
+    assert(await page.getByRole('button', {name: 'Reload', exact: true}).isVisible());
     assert.deepEqual(errors, []);
     assert(!messages.some(m => /Error:|INVALID_ENUM|INVALID_OPERATION/.test(m)), 'Runtime/GL error');
     console.log('Browser smoke passed: pacing, draw, shader, font, buffer/texture readback, audio, restart, save reload, quit');

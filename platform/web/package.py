@@ -26,7 +26,8 @@ def main():
     for name in ('love.js', 'love.wasm'):
         shutil.copy2(args.runtime / name, output / name)
     shutil.copytree(args.runtime / 'licenses', output / 'licenses', dirs_exist_ok=True)
-    shutil.copy2(Path(__file__).with_name('index.html'), output / 'index.html')
+    for name in ('index.html', 'player.js'):
+        shutil.copy2(Path(__file__).with_name(name), output / name)
     if game.is_file():
         shutil.copy2(game, output / 'game.love')
     else:

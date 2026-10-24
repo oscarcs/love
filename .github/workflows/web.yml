@@ -31,9 +31,11 @@ jobs:
       - name: Browser smoke tests
         run: |
           npm install --prefix .ci/browser playwright@1.62.1
-          .ci/browser/node_modules/.bin/playwright install --with-deps chromium firefox
+          .ci/browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
           python3 -m http.server 8124 --bind 127.0.0.1 --directory build/web-smoke &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
-          NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs
-          BROWSER=firefox NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs
+          for browser in chromium firefox webkit; do
+            BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs
+            BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/host.cjs
+          done
