@@ -313,6 +313,8 @@ public:
 	 */
 	virtual void setPlaybackDevice(const char *name);
 
+	virtual void poolUpdate();
+
 protected:
 
 	Audio(const char *name);

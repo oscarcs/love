@@ -1,0 +1,84 @@
+name: Web
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/web.yml'
+      - 'platform/web/**'
+      - 'src/**'
+      - 'extra/cmake/**'
+      - 'extra/dependencies/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'license.txt'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: emscripten-core/emsdk
+          ref: d7b4130688bfa348392b921ab04015aa15c4f154
+          path: .ci/emsdk
+      - name: Install Emscripten
+        run: |
+          .ci/emsdk/emsdk install 4.0.10
+          .ci/emsdk/emsdk activate 4.0.10
+      - name: Build
+        run: |
+          source .ci/emsdk/emsdk_env.sh
+          cmake --preset web -DLOVE_WEB_PROFILING=OFF
+          cmake --build --preset web --parallel 2
+          python3 -m unittest discover -s extra/dependencies/tests -v
+          python3 -m unittest discover -s platform/web/tests -v
+          node --test platform/web/tests/test_audio.cjs
+          python3 platform/web/package.py platform/web/tests/game build/web-smoke --compress --archive dist/love-web-smoke.zip
+          python3 platform/web/release.py --revision "$GITHUB_SHA"
+      - name: Browser smoke tests
+        env:
+          HEADED: '1'
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          npm install --prefix .ci/browser playwright@1.62.1
+          .ci/browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
+          sudo apt-get install --no-install-recommends --yes xvfb xauth libgl1-mesa-dri pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio
+          pactl set-default-sink ci_audio
+          python3 platform/web/serve.py build/web-smoke --port 8124 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          set -o pipefail
+          mkdir -p build/web-test-results
+          browser_status=0
+          for browser in chromium firefox webkit; do
+            for suite in browser host storage lifecycle; do
+              echo "Running $browser $suite"
+              BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" \
+                SMOKE_SCREENSHOT="$PWD/build/web-test-results/$browser.png" \
+                xvfb-run -a -s '-screen 0 1280x1024x24' \
+                node "platform/web/tests/$suite.cjs" http://127.0.0.1:8124 \
+                2>&1 | tee "build/web-test-results/$browser-$suite.log" || browser_status=1
+            done
+          done
+          exit "$browser_status"
+      - name: Upload browser test diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-web-browser-tests
+          path: build/web-test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload web distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-web
+          path: dist/love-web-*.zip
+          if-no-files-found: error
+          retention-days: 14

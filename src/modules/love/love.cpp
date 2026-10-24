@@ -788,6 +788,15 @@ int luaopen_love_nogame(lua_State *L)
 
 int luaopen_love_jitsetup(lua_State *L)
 {
+#ifdef LOVE_EMSCRIPTEN
+	static const char webcompat[] =
+#include "scripts/webcompat.lua"
+	;
+	if (luaL_loadbuffer(L, webcompat, sizeof(webcompat), "=[love \"webcompat.lua\"]") == 0)
+		lua_call(L, 0, 0);
+	else
+		return lua_error(L);
+#endif
 	if (luaL_loadbuffer(L, jit_setup_lua, sizeof(jit_setup_lua), "=[love \"jitsetup.lua\"]") == 0)
 		lua_call(L, 0, 1);
 

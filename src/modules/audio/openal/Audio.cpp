@@ -26,6 +26,41 @@
 #include <cstdlib>
 #include <iostream>
 
+#ifdef LOVE_EMSCRIPTEN
+#include <emscripten.h>
+
+// Emscripten 4.0.10's alcDestroyContext removes its bookkeeping but does not
+// close the underlying Web Audio context, leaking one on each game restart.
+EM_JS(void, loveWebCloseAudioContext, (ALCcontext *context), {
+	const ctx = AL.contexts[context];
+	// Remove gesture listeners before close(): the public state can still be
+	// suspended while the audio control thread has already closed the context.
+	ctx?.audioCtx['loveDisposeAutoResume']?.();
+	if (ctx && ctx.audioCtx.state !== 'closed')
+		ctx.audioCtx.close().catch(error => console.warn('Could not close audio context', error));
+});
+
+// Match Emscripten's device pause/resume behavior while handling Web Audio
+// promises. Navigation can reject suspend(), and resume may need a gesture.
+EM_JS(void, loveWebSetAudioPaused, (ALCdevice *device, int paused), {
+	AL.paused = !!paused;
+	for (const ctx of Object.values(AL.contexts)) {
+		if (ctx.deviceId !== device) continue;
+		if (paused) {
+			clearInterval(ctx.interval);
+			ctx.interval = null;
+			ctx.audioCtx.suspend().catch(() => {});
+		} else {
+			if (!ctx.interval)
+				ctx.interval = setInterval(() => AL.scheduleContextAudio(ctx), AL.QUEUE_INTERVAL);
+			ctx.audioCtx.resume().then(
+				() => Module['onAudioResumed']?.(),
+				() => Module['onAudioResumeError']?.());
+		}
+	}
+});
+#endif
+
 #ifdef LOVE_IOS
 #include "common/ios.h"
 #endif
@@ -195,13 +230,18 @@ Audio::Audio()
 #endif
 
 		alcMakeContextCurrent(nullptr);
+#ifdef LOVE_EMSCRIPTEN
+		loveWebCloseAudioContext(context);
+#endif
 		alcDestroyContext(context);
 		alcCloseDevice(device);
 		throw;
 	}
 
+#ifndef LOVE_EMSCRIPTEN
 	poolThread = new PoolThread(pool);
 	poolThread->start();
+#endif
 	
 #ifdef LOVE_IOS
 	love::ios::initAudioSessionInterruptionHandler();
@@ -223,8 +263,11 @@ Audio::~Audio()
 #ifdef LOVE_IOS
 	love::ios::destroyAudioSessionInterruptionHandler();
 #endif
-	poolThread->setFinish();
-	poolThread->wait();
+	if (poolThread)
+	{
+		poolThread->setFinish();
+		poolThread->wait();
+	}
 
 	delete poolThread;
 	delete pool;
@@ -249,6 +292,9 @@ Audio::~Audio()
 	}
 #endif
 	alcMakeContextCurrent(nullptr);
+#ifdef LOVE_EMSCRIPTEN
+	loveWebCloseAudioContext(context);
+#endif
 	alcDestroyContext(context);
 	alcCloseDevice(device);
 }
@@ -358,7 +404,9 @@ std::vector<love::audio::Source*> Audio::pause()
 
 void Audio::pauseContext()
 {
-#ifdef LOVE_ANDROID
+#ifdef LOVE_EMSCRIPTEN
+	loveWebSetAudioPaused(device, 1);
+#elif defined(LOVE_ANDROID)
 	if (alcDevicePauseSOFT)
 		alcDevicePauseSOFT(device);
 	else
@@ -379,7 +427,9 @@ void Audio::pauseContext()
 
 void Audio::resumeContext()
 {
-#ifdef LOVE_ANDROID
+#ifdef LOVE_EMSCRIPTEN
+	loveWebSetAudioPaused(device, 0);
+#elif defined(LOVE_ANDROID)
 	if (alcDeviceResumeSOFT)
 		alcDeviceResumeSOFT(device);
 	else
@@ -422,6 +472,7 @@ void Audio::getPlaybackDevices(std::vector<std::string> &list)
 
 void Audio::setPlaybackDevice(const char *name)
 {
+#ifndef LOVE_EMSCRIPTEN
 #ifndef ALC_SOFT_reopen_device
 	typedef ALCboolean (ALC_APIENTRY*LPALCREOPENDEVICESOFT)(ALCdevice *device,
 		const ALCchar *deviceName, const ALCint *attribs);
@@ -442,6 +493,9 @@ void Audio::setPlaybackDevice(const char *name)
 
 	if (alcReopenDeviceSOFT(device, (const ALCchar *) name, attribs.data()) == ALC_FALSE)
 		throw love::Exception("Cannot set output device: %s", alcGetString(device, alcGetError(device)));
+#else
+	love::audio::Audio::setPlaybackDevice(name);
+#endif
 }
 
 void Audio::setVolume(float volume)
@@ -741,6 +795,12 @@ bool Audio::isEFXsupported() const
 #else
 	return false;
 #endif
+}
+
+
+void Audio::poolUpdate()
+{
+	pool->update();
 }
 
 bool Audio::setOutputSpatialization(bool enable, const char *filter)

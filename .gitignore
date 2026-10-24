@@ -68,5 +68,6 @@ stamp-h1
 /.deps/
 /.ci/
 /prefix/
+/dist/
 CMakeUserPresets.json
 __pycache__/

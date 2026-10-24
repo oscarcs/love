@@ -21,6 +21,12 @@
 
 #include "FenceSync.h"
 
+#ifdef LOVE_EMSCRIPTEN
+// The Emscripten proc-address entry uses a split 64-bit timeout, unlike the
+// native GL function pointer signature. Call that entry with its actual ABI.
+extern "C" unsigned int emscripten_glClientWaitSync(void *, unsigned int, unsigned int, unsigned int);
+#endif
+
 namespace love
 {
 namespace graphics
@@ -50,7 +56,11 @@ bool FenceSync::isComplete() const
 	if (sync == 0)
 		return true;
 
+#ifdef LOVE_EMSCRIPTEN
+	GLenum status = emscripten_glClientWaitSync(sync, 0, 0, 0);
+#else
 	GLenum status = glClientWaitSync(sync, 0, 0);
+#endif
 
 	if (status == GL_ALREADY_SIGNALED || status == GL_CONDITION_SATISFIED)
 		return true;
@@ -66,6 +76,12 @@ bool FenceSync::cpuWait()
 	if (sync == 0)
 		return false;
 
+#ifdef LOVE_EMSCRIPTEN
+	// WebGL fences cannot signal until control returns to the browser. Never
+	// spin on the main thread; callers must poll again on a subsequent frame.
+	if (!isComplete())
+		return false;
+#else
 	GLbitfield flags = 0;
 	GLuint64 duration = 0;
 
@@ -82,6 +98,7 @@ bool FenceSync::cpuWait()
 		flags = GL_SYNC_FLUSH_COMMANDS_BIT;
 		duration = 1000000000; // 1 second in nanoseconds.
 	}
+#endif
 
 	cleanup();
 

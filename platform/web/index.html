@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LÖVE</title>
+<style>
+html,body{margin:0;height:100%;background:#151820;color:#eee;font:16px system-ui}body{display:flex;flex-direction:column;align-items:center;justify-content:center}canvas{max-width:100%;max-height:90vh;object-fit:contain;outline:none}button{padding:12px 24px;font:inherit;cursor:pointer}#save-status,#save-tools{max-width:90%;padding:6px;font-size:14px}#status{white-space:pre-wrap;max-width:90%;padding:12px}
+</style>
+</head>
+<body>
+<button id="start" disabled>Loading…</button>
+<button id="resume-audio" hidden>Resume audio</button>
+<button id="reload" hidden>Reload</button>
+<div id="status" role="status"></div>
+<div id="save-status" role="status"></div>
+<div id="save-tools" hidden>
+<button id="export-saves">Export saves</button>
+<label>Import saves (before playing) <input id="import-saves" type="file" accept="application/json,.json"></label>
+<div id="backup-status" role="status"></div>
+</div>
+<canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+<script src="saves.js"></script>
+<script src="player.js"></script>
+</body>
+</html>

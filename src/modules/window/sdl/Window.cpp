@@ -1093,6 +1093,12 @@ love::image::ImageData *Window::getIcon()
 
 void Window::setVSync(int vsync)
 {
+#ifdef LOVE_EMSCRIPTEN
+	// Browsers present at display refresh boundaries. SDL's interval 0 uses
+	// zero-delay timers, which can submit several frames between presentations.
+	// Keep the main loop on requestAnimationFrame for uncapped native games too.
+	vsync = std::max(vsync, 1);
+#endif
 	if (glcontext != nullptr)
 	{
 		SDL_GL_SetSwapInterval(vsync);

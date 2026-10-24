@@ -23,6 +23,8 @@ def entries(profile):
     lock = json.loads(LOCK.read_text())
     selected = {}
     for name in LIBRARIES:
+        if profile == "web" and name in ("luajit", "openal"):
+            continue
         key = name
         if profile == 'android' and name == 'openal':
             key = 'openal-android'
@@ -131,7 +133,7 @@ def collect_notices(directory, sources):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--profile', choices=('linux', 'windows', 'macos', 'ios', 'android'), required=True)
+    parser.add_argument('--profile', choices=('linux', 'windows', 'macos', 'ios', 'android', 'web'), required=True)
     parser.add_argument('--directory', type=Path, required=True)
     parser.add_argument('--only', choices=LIBRARIES, action='append')
     args = parser.parse_args()
