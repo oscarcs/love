@@ -38,11 +38,24 @@ jobs:
           python3 platform/web/serve.py build/web-smoke --port 8124 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
+          set -o pipefail
+          mkdir -p build/web-test-results
           for browser in chromium firefox webkit; do
-            BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs
-            BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/host.cjs
-            BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/storage.cjs
+            for suite in browser host storage lifecycle; do
+              BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" \
+                SMOKE_SCREENSHOT="$PWD/build/web-test-results/$browser.png" \
+                node "platform/web/tests/$suite.cjs" http://127.0.0.1:8124 \
+                2>&1 | tee "build/web-test-results/$browser-$suite.log"
+            done
           done
+      - name: Upload browser test diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-web-browser-tests
+          path: build/web-test-results/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload web distributions
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

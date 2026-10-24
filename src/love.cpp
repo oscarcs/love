@@ -52,6 +52,25 @@ extern "C" {
 
 #ifdef LOVE_EMSCRIPTEN
 #include <emscripten.h>
+#include "modules/audio/Audio.h"
+#include "modules/timer/Timer.h"
+
+extern "C" EMSCRIPTEN_KEEPALIVE void love_web_set_hidden(int hidden)
+{
+	if (auto audio = love::Module::getInstance<love::audio::Audio>(love::Module::M_AUDIO))
+	{
+		if (hidden)
+			audio->pauseContext();
+		else
+			audio->resumeContext();
+	}
+	// The next game update must not include time spent in a suspended tab.
+	if (!hidden)
+	{
+		if (auto timer = love::Module::getInstance<love::timer::Timer>(love::Module::M_TIMER))
+			timer->step();
+	}
+}
 #endif
 
 #ifdef LOVE_WINDOWS

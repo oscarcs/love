@@ -67,7 +67,12 @@ function love.load()
     print('LOVE_WEB_SAVE_COUNT=' .. (previous + 1))
   end
 end
-function love.update()
+function love.update(dt)
+  if love.filesystem.getInfo("resume-check") then
+    love.filesystem.remove("resume-check")
+    assert(dt < 0.25, "Background time leaked into the next update")
+    print("LOVE_WEB_RESUME_OK")
+  end
   frame = frame + 1
   if frame == 5 and not love.restart then love.event.quit('restart', 'web-restart') end
   if frame == 10 and love.restart then

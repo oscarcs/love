@@ -73,6 +73,11 @@ compression, and CI artifact details. Always deploy the full package, including
 - Native HTTPS is disabled. LuaSocket/ENet are not a browser networking solution.
 - OpenAL effects and device selection are limited by Emscripten's implementation.
 - Browser permissions and user gestures govern audio, fullscreen, and pointer lock.
+- Hidden pages pause rendering and the audio device. Returning to the page resets
+  the frame timer before resuming, excluding background time from the next update.
+  Restart and quit close the old Web Audio context.
+  If the browser rejects audio resumption, the player offers a Resume audio button.
+  Actual OS-specific interruption behavior still needs device testing.
 - Graphics context loss stops the game and offers a reload from the last save;
   transparent GPU resource restoration is not implemented.
 - Custom blocking `love.run` loops must yield to the browser.
@@ -99,7 +104,9 @@ buffer/texture readback, indexed meshes, sprite batches, window resizing, a cust
 shader, font drawing, audio creation, restart
 data, saves across reload, and quit. `.github/workflows/web.yml` builds
 and runs this in Chromium, Firefox, and WebKit. Host tests inject missing browser
-capabilities, failed downloads, and graphics context loss. Playwright WebKit is
+capabilities, failed downloads, and graphics context loss. Lifecycle tests inject
+visibility and page-cache events and check rendering, audio, and frame deltas.
+Actual OS suspension and Safari application testing remain manual checks. Playwright WebKit is
 engine coverage, not certification of the shipping Safari application. Tiny Strategy is an external manual integration
 fixture and is not needed by CI.
 

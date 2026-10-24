@@ -5,17 +5,32 @@
   const start = document.getElementById('start');
   const reload = document.getElementById('reload');
   const canvas = document.getElementById('canvas');
+  const resumeAudio = document.getElementById('resume-audio');
+  resumeAudio.onclick = () => runtime?._love_web_set_hidden(0);
   const saveStatus = document.getElementById('save-status');
   const backupStatus = document.getElementById('backup-status');
   const importer = document.getElementById('import-saves');
-  let runtime, assets, stopped = false;
+  let runtime, assets, stopped = false, started = false, suspended = false;
   const asset = name => name + "?v=" + assets[name].sha256;
-  const showSaveStatus = value => { saveStatus.textContent = value.message || ''; };
+  const lockWarning = 'Use one game tab at a time: this browser cannot lock saves across tabs.';
+  const showSaveStatus = value => { saveStatus.textContent = value.message || (runtime?.saveLockUnavailable ? lockWarning : ''); };
+  function setHidden(hidden) {
+    if (!started || stopped || suspended === hidden) return;
+    suspended = hidden;
+    runtime._love_web_set_hidden(hidden ? 1 : 0);
+    if (hidden) runtime.pauseMainLoop();
+    else runtime.resumeMainLoop();
+  }
+  document.addEventListener('visibilitychange', () => setHidden(document.hidden));
+  window.addEventListener('pagehide', () => setHidden(true));
+  window.addEventListener('pageshow', () => setHidden(document.hidden));
   window.addEventListener('beforeunload', event => {
     if (['saving', 'error'].includes(runtime?.saveStatus?.state)) { event.preventDefault(); event.returnValue = ''; }
   });
   const fail = error => {
     stopped = true;
+    resumeAudio.hidden = true;
+    runtime?._love_web_set_hidden?.(1);
     runtime?.pauseMainLoop?.();
     status.textContent = String(error.message || error);
     start.hidden = true;
@@ -71,15 +86,18 @@
     const bytes = await downloadGame();
     status.textContent = 'Starting game engine…';
     runtime = await Love({canvas, locateFile: path => asset(path), print: console.log, printErr: console.error, onAbort: fail, onSaveStatus: showSaveStatus,
+      onAudioResumeError: () => { if (!stopped && !document.hidden) resumeAudio.hidden = false; },
+      onAudioResumed: () => { resumeAudio.hidden = true; },
       onLoveQuit: code => {
         stopped = true;
+        resumeAudio.hidden = true;
         status.textContent = code === 0 ? 'Game closed.' : 'The game exited with an error (' + code + ').';
         reload.hidden = false;
         window.dispatchEvent(new CustomEvent('lovequit', {detail: code}));
       }});
     window.loveRuntime = runtime;
     document.getElementById('save-tools').hidden = false;
-    if (runtime.saveLockUnavailable) saveStatus.textContent = 'Use one game tab at a time: this browser cannot lock saves across tabs.';
+    if (runtime.saveLockUnavailable) saveStatus.textContent = lockWarning;
     document.getElementById('export-saves').onclick = () => {
       try {
         const url = URL.createObjectURL(new Blob([loveSaveBackups.export(runtime.FS)], {type: 'application/json'}));
@@ -110,7 +128,11 @@
       start.hidden = true;
       importer.disabled = true;
       canvas.focus();
-      try { runtime.callMain(['/game.love']); } catch (error) { fail(error); }
+      try {
+        runtime.callMain(['/game.love']);
+        started = true;
+        setHidden(document.hidden);
+      } catch (error) { fail(error); }
     };
   }
   boot().catch(fail);
