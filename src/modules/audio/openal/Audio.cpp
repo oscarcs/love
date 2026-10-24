@@ -33,6 +33,9 @@
 // close the underlying Web Audio context, leaking one on each game restart.
 EM_JS(void, loveWebCloseAudioContext, (ALCcontext *context), {
 	const ctx = AL.contexts[context];
+	// Remove gesture listeners before close(): the public state can still be
+	// suspended while the audio control thread has already closed the context.
+	ctx?.audioCtx['loveDisposeAutoResume']?.();
 	if (ctx && ctx.audioCtx.state !== 'closed')
 		ctx.audioCtx.close().catch(error => console.warn('Could not close audio context', error));
 });
