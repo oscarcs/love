@@ -7,7 +7,7 @@ const playwright = require('playwright');
     ...((process.env.BROWSER_PATH || process.env.CHROMIUM_PATH) ? {executablePath: process.env.BROWSER_PATH || process.env.CHROMIUM_PATH} : {})});
   const url = process.argv[2] || 'http://127.0.0.1:8124';
   try {
-    for (const scenario of ['wasm', 'webgl', 'engine', 'game']) {
+    for (const scenario of ['wasm', 'webgl', 'manifest', 'engine', 'game']) {
       const page = await browser.newPage();
       if (scenario === 'wasm') await page.addInitScript(() => { window.WebAssembly = undefined; });
       if (scenario === 'webgl') await page.addInitScript(() => {
@@ -16,12 +16,13 @@ const playwright = require('playwright');
           return type === 'webgl2' ? null : original.call(this, type, ...args);
         };
       });
-      if (scenario === 'engine') await page.route('**/love.js', route => route.abort());
-      if (scenario === 'game') await page.route('**/game.love', route => route.fulfill({status: 503, body: 'Unavailable'}));
+      if (scenario === 'manifest') await page.route('**/manifest.json', route => route.fulfill({status: 503, body: 'Unavailable'}));
+      if (scenario === 'engine') await page.route('**/love.js*', route => route.abort());
+      if (scenario === 'game') await page.route('**/game.love*', route => route.fulfill({status: 503, body: 'Unavailable'}));
       await page.goto(url);
       await page.getByRole('button', {name: 'Reload', exact: true}).waitFor();
       const message = await page.locator('#status').innerText();
-      assert.match(message, {wasm: /WebAssembly/, webgl: /WebGL 2/, engine: /load the game engine/, game: /HTTP 503/}[scenario]);
+      assert.match(message, {wasm: /WebAssembly/, webgl: /WebGL 2/, manifest: /game manifest/, engine: /load the game engine/, game: /HTTP 503/}[scenario]);
       await page.close();
     }
     const page = await browser.newPage();

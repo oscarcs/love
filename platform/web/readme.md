@@ -56,6 +56,14 @@ transactional if storage or memory runs out midway, so export before replacing
 valuable saves. Import backups only from sources you trust: games may execute Lua
 stored in save files. Backups contain all game identities on this origin.
 
+## Release packages
+
+Use `--compress --archive dist/game.zip` with the packager to produce gzip sidecars
+and a deterministic deployment ZIP. `release.py` builds a reusable engine bundle.
+See [hosting.md](hosting.md) for release commands, manifests, caching, MIME types,
+compression, and CI artifact details. Always deploy the full package, including
+`manifest.json`, `player.js`, and `saves.js`.
+
 ## Scope
 
 - WebGL 2 only; no WebGPU, compute shaders, or native-only graphics features.

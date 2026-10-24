@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, web-support]
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,14 +25,17 @@ jobs:
       - name: Build
         run: |
           source .ci/emsdk/emsdk_env.sh
-          cmake --preset web
+          cmake --preset web -DLOVE_WEB_PROFILING=OFF
           cmake --build --preset web --parallel 2
-          python3 platform/web/package.py platform/web/tests/game build/web-smoke
+          python3 -m unittest discover -s extra/dependencies/tests -v
+          python3 -m unittest discover -s platform/web/tests -v
+          python3 platform/web/package.py platform/web/tests/game build/web-smoke --compress --archive dist/love-web-smoke.zip
+          python3 platform/web/release.py --revision "$GITHUB_SHA"
       - name: Browser smoke tests
         run: |
           npm install --prefix .ci/browser playwright@1.62.1
           .ci/browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
-          python3 -m http.server 8124 --bind 127.0.0.1 --directory build/web-smoke &
+          python3 platform/web/serve.py build/web-smoke --port 8124 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           for browser in chromium firefox webkit; do
@@ -40,3 +43,10 @@ jobs:
             BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/host.cjs
             BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/storage.cjs
           done
+      - name: Upload web distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: love-web
+          path: dist/love-web-*.zip
+          if-no-files-found: error
+          retention-days: 14

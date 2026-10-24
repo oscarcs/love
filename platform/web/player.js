@@ -8,7 +8,8 @@
   const saveStatus = document.getElementById('save-status');
   const backupStatus = document.getElementById('backup-status');
   const importer = document.getElementById('import-saves');
-  let runtime, stopped = false;
+  let runtime, assets, stopped = false;
+  const asset = name => name + "?v=" + assets[name].sha256;
   const showSaveStatus = value => { saveStatus.textContent = value.message || ''; };
   window.addEventListener('beforeunload', event => {
     if (['saving', 'error'].includes(runtime?.saveStatus?.state)) { event.preventDefault(); event.returnValue = ''; }
@@ -30,14 +31,14 @@
   function loadRuntime() {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'love.js';
+      script.src = asset('love.js');
       script.onload = resolve;
       script.onerror = () => reject(new Error('Could not load the game engine. Check your connection and reload.'));
       document.head.appendChild(script);
     });
   }
   async function downloadGame() {
-    const response = await fetch('game.love');
+    const response = await fetch(asset('game.love'));
     if (!response.ok) throw new Error('Could not download the game (HTTP ' + response.status + ').');
     if (!response.body) return new Uint8Array(await response.arrayBuffer());
     const reader = response.body.getReader(), chunks = [];
@@ -60,10 +61,16 @@
     if (!probe) throw new Error('WebGL 2 is unavailable. Check browser graphics settings or try another browser.');
     probe.getExtension('WEBGL_lose_context')?.loseContext();
     status.textContent = 'Loading game engine…';
+    const metadata = await fetch('manifest.json', {cache: 'no-store'});
+    if (!metadata.ok) throw new Error('Could not load the game manifest (HTTP ' + metadata.status + ').');
+    const manifest = await metadata.json();
+    assets = manifest.assets;
+    if (manifest.version !== 1 || !assets || ['love.js', 'love.wasm', 'game.love'].some(name => !/^[a-f0-9]{64}$/.test(assets[name]?.sha256)))
+      throw new Error('The game package manifest is invalid. Rebuild or redeploy the complete package.');
     await loadRuntime();
     const bytes = await downloadGame();
     status.textContent = 'Starting game engine…';
-    runtime = await Love({canvas, print: console.log, printErr: console.error, onAbort: fail, onSaveStatus: showSaveStatus,
+    runtime = await Love({canvas, locateFile: path => asset(path), print: console.log, printErr: console.error, onAbort: fail, onSaveStatus: showSaveStatus,
       onLoveQuit: code => {
         stopped = true;
         status.textContent = code === 0 ? 'Game closed.' : 'The game exited with an error (' + code + ').';
