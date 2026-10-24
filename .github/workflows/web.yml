@@ -32,9 +32,13 @@ jobs:
           python3 platform/web/package.py platform/web/tests/game build/web-smoke --compress --archive dist/love-web-smoke.zip
           python3 platform/web/release.py --revision "$GITHUB_SHA"
       - name: Browser smoke tests
+        env:
+          HEADED: '1'
+          LIBGL_ALWAYS_SOFTWARE: '1'
         run: |
           npm install --prefix .ci/browser playwright@1.62.1
           .ci/browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
+          sudo apt-get install --no-install-recommends --yes xvfb xauth libgl1-mesa-dri
           python3 platform/web/serve.py build/web-smoke --port 8124 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
@@ -42,8 +46,10 @@ jobs:
           mkdir -p build/web-test-results
           for browser in chromium firefox webkit; do
             for suite in browser host storage lifecycle; do
+              echo "Running $browser $suite"
               BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" \
                 SMOKE_SCREENSHOT="$PWD/build/web-test-results/$browser.png" \
+                xvfb-run -a -s '-screen 0 1280x1024x24' \
                 node "platform/web/tests/$suite.cjs" http://127.0.0.1:8124 \
                 2>&1 | tee "build/web-test-results/$browser-$suite.log"
             done

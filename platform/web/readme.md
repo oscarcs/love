@@ -99,6 +99,10 @@ node platform/web/tests/browser.cjs http://127.0.0.1:8124
 BROWSER=firefox node platform/web/tests/browser.cjs http://127.0.0.1:8124
 ```
 
+Linux CI runs headed browsers under Xvfb with Mesa software rendering because
+headless Firefox can reject WebGL 2 context creation. To reproduce that setup,
+prefix the test command with `HEADED=1 LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a`.
+
 The fixture checks browser pacing, canvas pixels, partial buffer and asynchronous
 buffer/texture readback, indexed meshes, sprite batches, window resizing, a custom
 shader, font drawing, audio creation, restart
