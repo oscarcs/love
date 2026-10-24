@@ -39,7 +39,22 @@ python3 platform/web/package.py ~/Dev/tiny-strategy build/web-tiny-strategy \
 
 Save data is stored in IndexedDB, isolated by origin and LÖVE identity. Writes
 are persisted during play. Browser storage can be cleared or unavailable in
-private browsing. The player warns when initial save loading fails.
+private browsing. The player shows initial-load and automatic-write failures.
+A failed initial read disables persistence until reload, protecting existing saves.
+Writes are serialized; a pending or failed write triggers a browser close warning
+where supported. An abrupt browser/process termination can still lose pending data.
+
+On browsers with Web Locks, only one tab per origin can write this save tree.
+Other tabs run with session-only changes and a visible warning. Close the owning
+tab and reload to acquire write access. On hosts without Web Locks, use one tab.
+
+Use **Export saves** to download a JSON backup, including in-memory data when
+storage fails. **Import saves** is available before Play: it adds/replaces matching
+files and preserves others. Backups are limited to 32 MiB of decoded data; paths,
+duplicates, and file/directory conflicts are checked before writes. Import is not
+transactional if storage or memory runs out midway, so export before replacing
+valuable saves. Import backups only from sources you trust: games may execute Lua
+stored in save files. Backups contain all game identities on this origin.
 
 ## Scope
 

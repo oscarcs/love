@@ -5,7 +5,14 @@
   const start = document.getElementById('start');
   const reload = document.getElementById('reload');
   const canvas = document.getElementById('canvas');
+  const saveStatus = document.getElementById('save-status');
+  const backupStatus = document.getElementById('backup-status');
+  const importer = document.getElementById('import-saves');
   let runtime, stopped = false;
+  const showSaveStatus = value => { saveStatus.textContent = value.message || ''; };
+  window.addEventListener('beforeunload', event => {
+    if (['saving', 'error'].includes(runtime?.saveStatus?.state)) { event.preventDefault(); event.returnValue = ''; }
+  });
   const fail = error => {
     stopped = true;
     runtime?.pauseMainLoop?.();
@@ -56,7 +63,7 @@
     await loadRuntime();
     const bytes = await downloadGame();
     status.textContent = 'Starting game engine…';
-    runtime = await Love({canvas, print: console.log, printErr: console.error, onAbort: fail,
+    runtime = await Love({canvas, print: console.log, printErr: console.error, onAbort: fail, onSaveStatus: showSaveStatus,
       onLoveQuit: code => {
         stopped = true;
         status.textContent = code === 0 ? 'Game closed.' : 'The game exited with an error (' + code + ').';
@@ -64,6 +71,29 @@
         window.dispatchEvent(new CustomEvent('lovequit', {detail: code}));
       }});
     window.loveRuntime = runtime;
+    document.getElementById('save-tools').hidden = false;
+    if (runtime.saveLockUnavailable) saveStatus.textContent = 'Use one game tab at a time: this browser cannot lock saves across tabs.';
+    document.getElementById('export-saves').onclick = () => {
+      try {
+        const url = URL.createObjectURL(new Blob([loveSaveBackups.export(runtime.FS)], {type: 'application/json'}));
+        const link = document.createElement('a');
+        link.href = url; link.download = 'love-saves.json'; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) { backupStatus.textContent = 'Export failed: ' + error.message; }
+    };
+    importer.onchange = async () => {
+      const file = importer.files[0];
+      if (!file) return;
+      importer.disabled = true;
+      start.disabled = true;
+      try {
+        if (file.size > 48 * 1024 * 1024) throw new Error('Backup file is too large.');
+        if (runtime.saveStatus.state === 'unavailable') throw new Error('Storage is unavailable. Resolve the save warning and reload first.');
+        await loveSaveBackups.import(runtime, await file.text());
+        backupStatus.textContent = 'Backup imported. Matching save files were replaced; other files were kept.';
+      } catch (error) { backupStatus.textContent = 'Import failed: ' + error.message; }
+      finally { importer.disabled = false; start.disabled = false; importer.value = ''; }
+    };
     if (stopped) return;
     runtime.FS.writeFile('/game.love', bytes);
     status.textContent = '';
@@ -71,6 +101,7 @@
     start.textContent = 'Play';
     start.onclick = () => {
       start.hidden = true;
+      importer.disabled = true;
       canvas.focus();
       try { runtime.callMain(['/game.love']); } catch (error) { fail(error); }
     };

@@ -38,4 +38,5 @@ jobs:
           for browser in chromium firefox webkit; do
             BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/browser.cjs
             BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/host.cjs
+            BROWSER="$browser" NODE_PATH="$PWD/.ci/browser/node_modules" node platform/web/tests/storage.cjs
           done
