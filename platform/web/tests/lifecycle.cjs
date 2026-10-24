@@ -26,7 +26,16 @@ const playwright = require('playwright');
     const initialized = page.waitForEvent('console', {predicate: message => message.text() === 'LOVE_WEB_SMOKE_OK'});
     await page.getByRole('button', {name: 'Play', exact: true}).click();
     await initialized;
-    await page.waitForFunction(() => testAudioContexts.some(context => context.state === 'running'));
+    try {
+      await page.waitForFunction(() => testAudioContexts.some(context => context.state === 'running'));
+    } catch (error) {
+      console.error('Audio startup state:', await page.evaluate(() => ({
+        contexts: testAudioContexts.map(context => ({state: context.state, sampleRate: context.sampleRate})),
+        status: document.querySelector('#status').textContent,
+        resumeAudioVisible: !document.querySelector('#resume-audio').hidden,
+      })));
+      throw error;
+    }
     await page.waitForFunction(() => testAudioContexts.filter(context => context.state !== 'closed').length === 1);
     assert(await page.evaluate(() => testAudioContexts.length >= 2), 'Restart did not create a replacement audio context');
     // Inject lifecycle events deterministically. This tests our handling, not OS suspension.
