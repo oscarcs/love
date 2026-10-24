@@ -2,8 +2,15 @@ name: Web
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main, web-support]
+    paths:
+      - '.github/workflows/web.yml'
+      - 'platform/web/**'
+      - 'src/**'
+      - 'extra/cmake/**'
+      - 'extra/dependencies/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'license.txt'
   workflow_dispatch:
 permissions:
   contents: read

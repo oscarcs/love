@@ -31,8 +31,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Check dependency tooling
-        run: python3 -m unittest discover -s extra/dependencies/tests -v
+      - name: Check dependency and web tooling
+        run: |
+          python3 -m unittest discover -s extra/dependencies/tests -v
+          python3 -m unittest discover -s platform/web/tests -v
+          node --test platform/web/tests/test_audio.cjs
 
       - name: Install dependencies
         run: |

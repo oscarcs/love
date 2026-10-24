@@ -56,6 +56,14 @@ currently share the save-tree lock, so only one tab can persist at a time.
 
 ## CI artifacts and validation
 
+Normal CI runs the fast Python packaging/HTTP tests and JavaScript audio
+regression tests without building the web runtime or installing browsers.
+The full Web workflow runs only on pull requests touching web files, engine
+sources, shared CMake/dependency configuration, or runtime licensing, and on
+manual dispatch. It does not run automatically on branch pushes, including
+`main`. Run it manually against the release revision before publishing a web
+release.
+
 The Web workflow builds the engine, runs Python packaging/HTTP tests and browser
 rendering, host-failure and storage tests in Chromium, Firefox and WebKit, then
 uploads `love-web-runtime.zip` and `love-web-smoke.zip` as workflow artifacts.
